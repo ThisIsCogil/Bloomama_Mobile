@@ -5,14 +5,14 @@ class RegisterScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Color(0xFFF2F4F7),
       body: SingleChildScrollView(
         child: Column(
           children: [
             Container(
               height: 200,
               decoration: BoxDecoration(
-                color: Colors.blueAccent,
+                color: Color(0xFF11B3CF),
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(50),
                   bottomRight: Radius.circular(50),
@@ -39,7 +39,7 @@ class RegisterScreen extends StatelessWidget {
                     decoration: InputDecoration(
                       labelText: 'Full Name',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      prefixIcon: Icon(Icons.person, color: Colors.blueAccent),
+                      prefixIcon: Icon(Icons.person, color: Color(0xFF11B3CF)),
                     ),
                   ),
                   SizedBox(height: 10),
@@ -47,7 +47,7 @@ class RegisterScreen extends StatelessWidget {
                     decoration: InputDecoration(
                       labelText: 'Email',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      prefixIcon: Icon(Icons.email, color: Colors.blueAccent),
+                      prefixIcon: Icon(Icons.email, color: Color(0xFF11B3CF)),
                     ),
                   ),
                   SizedBox(height: 10),
@@ -55,7 +55,7 @@ class RegisterScreen extends StatelessWidget {
                     decoration: InputDecoration(
                       labelText: 'Phone Number',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      prefixIcon: Icon(Icons.phone, color: Colors.blueAccent),
+                      prefixIcon: Icon(Icons.phone, color: Color(0xFF11B3CF)),
                     ),
                   ),
                   SizedBox(height: 10),
@@ -64,7 +64,7 @@ class RegisterScreen extends StatelessWidget {
                     decoration: InputDecoration(
                       labelText: 'Password',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      prefixIcon: Icon(Icons.lock, color: Colors.blueAccent),
+                      prefixIcon: Icon(Icons.lock, color: Color(0xFF11B3CF)),
                     ),
                   ),
                   SizedBox(height: 20),
@@ -77,7 +77,7 @@ class RegisterScreen extends StatelessWidget {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blueAccent,
+                        backgroundColor: Color(0xFF11B3CF),
                         padding: EdgeInsets.symmetric(vertical: 14, horizontal: 80),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
@@ -98,7 +98,7 @@ class RegisterScreen extends StatelessWidget {
                       },
                       child: Text(
                         'Already have an account? Log in',
-                        style: TextStyle(color: Colors.blueAccent, fontSize: 16),
+                        style: TextStyle(color: Color(0xFF11B3CF), fontSize: 16),
                       ),
                     ),
                   ),

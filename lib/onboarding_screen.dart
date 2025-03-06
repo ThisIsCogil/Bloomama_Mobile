@@ -36,6 +36,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFFF2F4F7),
       body: Column(
         children: [
           Expanded(
@@ -69,7 +70,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 height: _currentPage == index ? 12.0 : 8.0,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: _currentPage == index ? Colors.blueAccent : Colors.grey,
+                  color: _currentPage == index ? Color(0xFF11B3CF) : Colors.grey,
                 ),
               ),
             ),
@@ -88,7 +89,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     : SizedBox.shrink(),
                 ElevatedButton(
                   onPressed: _nextPage,
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
+                  style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF11B3CF)),
                   child: Text(
                     _currentPage == _slides.length - 1 ? 'Get Started' : 'Next',
                     style: TextStyle(color: Colors.white),
