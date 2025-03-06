@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'kesehatan/detail_kesehatan.dart'; 
+import 'kesehatan/penyakit.dart'; 
+import 'kesehatan/food_tips.dart'; 
+import 'kesehatan/olahraga.dart'; 
 
 
 
@@ -23,7 +26,7 @@ class KesehatanScreen extends StatelessWidget {
             icon: Icon(Icons.search, color: Colors.black),
             onPressed: () {
             
-            
+
             },
           ),
         ],
@@ -46,7 +49,7 @@ class KesehatanScreen extends StatelessWidget {
               icon: Icons.medical_information_outlined,
               title: 'Disease Information',
               description: 'Symptoms, Causes, Diagnosis, Treatment, Prevention, Risk Factors, Prognosis, and Medical Complications',
-              destination: null, 
+              destination: PenyakitScreen(), 
             ),
             SizedBox(height: 16),
             _buildHealthSection(
@@ -54,7 +57,7 @@ class KesehatanScreen extends StatelessWidget {
               icon: Icons.fastfood_outlined,
               title: 'Food Tips',
               description: 'Consumer Selected Meals, Fruits, Vegetables, Nutrition, Calorie Calculations, Healthy Eating, and to Sustain Nutrition',
-              destination: null, 
+              destination: FoodScreen(), 
             ),
             SizedBox(height: 16),
             _buildHealthSection(
@@ -62,7 +65,7 @@ class KesehatanScreen extends StatelessWidget {
               icon: Icons.directions_run_outlined,
               title: 'Exercise Tips',
               description: '60 Minutes Of Movement, Activity, Weekly, Workout, Calorie, Strength Training, Diet, Endurance, Flexibility Exercises',
-              destination: null, 
+              destination: ExerciseScreen(), 
             ),
           ],
         ),
