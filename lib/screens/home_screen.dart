@@ -57,7 +57,7 @@ Widget build(BuildContext context) {
   Widget _buildStartJourney() {
   return Container(
     width: double.infinity,
-    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), // Padding lebih besar
+    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), 
     decoration: BoxDecoration(
       gradient: LinearGradient(
         colors: [Color(0xFF11B3CF), Colors.lightBlueAccent],
@@ -76,7 +76,7 @@ Widget build(BuildContext context) {
     ),
     child: Row(
       children: [
-        // Bagian Kiri: Ilustrasi / Icon
+       
         Container(
           decoration: BoxDecoration(
             shape: BoxShape.circle,
@@ -328,7 +328,7 @@ Widget build(BuildContext context) {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Dr. Nasrullah",
+                  Text("Dr. Rahmat Hariadi",
                       style: TextStyle(fontWeight: FontWeight.bold)),
                   Text("General Consultation",
                       style: TextStyle(color: Colors.grey)),

@@ -31,6 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
 
+
   flutter_native_splash: ^2.4.4
   fl_chart: ^0.70.2
   easy_date_timeline: ^2.0.9
