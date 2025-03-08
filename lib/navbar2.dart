@@ -50,7 +50,7 @@ class _AnimatedNavBarState extends State<AnimatedNavBar> {
               children: [
                 Expanded(child: _buildNavItem(context, 0, Icons.home_outlined, 'Home')),
                 Expanded(child: _buildNavItem(context, 1, Icons.calendar_today_outlined, 'Healthy')),
-                Expanded(child: _buildNavItem(context, 2, Icons.people_outline, 'Community')),
+                Expanded(child: _buildNavItem(context, 2, Icons.people_outline,'Community')),
                 Expanded(child: _buildNavItem(context, 3, Icons.person_outline, 'Profile')),
               ],
             ),

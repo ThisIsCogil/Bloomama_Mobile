@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import '../login.dart';
 
 class ProfileScreen extends StatelessWidget {
+  final ScrollController scrollController;
+
+  ProfileScreen({required this.scrollController});
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
