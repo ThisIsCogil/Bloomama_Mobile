@@ -4,12 +4,18 @@ import 'package:easy_date_timeline/easy_date_timeline.dart';
 import 'calender.dart';
 
 class HomeScreen extends StatelessWidget {
+  final ScrollController scrollController;
+
+  HomeScreen({required this.scrollController});
+
+
   @override
 Widget build(BuildContext context) {
   return Scaffold(
     backgroundColor: Color(0xFFF2F4F7),
     body: SafeArea( // Tambahkan SafeArea di sini
       child: SingleChildScrollView(
+        controller: scrollController,
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

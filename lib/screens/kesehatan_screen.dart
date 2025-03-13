@@ -4,9 +4,12 @@ import 'kesehatan/penyakit.dart';
 import 'kesehatan/food_tips.dart'; 
 import 'kesehatan/olahraga.dart'; 
 
-
-
 class KesehatanScreen extends StatelessWidget {
+  final ScrollController scrollController;
+
+  KesehatanScreen({required this.scrollController});
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -16,7 +19,6 @@ class KesehatanScreen extends StatelessWidget {
           icon: Icon(Icons.menu, color: Colors.black),
           onPressed: () {
            
-
           },
         ),
         backgroundColor: Colors.transparent,
@@ -26,48 +28,51 @@ class KesehatanScreen extends StatelessWidget {
             icon: Icon(Icons.search, color: Colors.black),
             onPressed: () {
             
-
             },
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildHealthSection(
-              context: context,
-              icon: Icons.health_and_safety_outlined,
-              title: 'Health Details',
-              description: 'Vital Signs And Physical Examination (Blood Pressure, Weight, Medical History, etc.)',
-              destination: DetailKesehatanScreen(),
-            ),
-            SizedBox(height: 16),
-            _buildHealthSection(
-              context: context,
-              icon: Icons.medical_information_outlined,
-              title: 'Disease Information',
-              description: 'Symptoms, Causes, Diagnosis, Treatment, Prevention, Risk Factors, Prognosis, and Medical Complications',
-              destination: PenyakitScreen(), 
-            ),
-            SizedBox(height: 16),
-            _buildHealthSection(
-              context: context,
-              icon: Icons.fastfood_outlined,
-              title: 'Food Tips',
-              description: 'Consumer Selected Meals, Fruits, Vegetables, Nutrition, Calorie Calculations, Healthy Eating, and to Sustain Nutrition',
-              destination: FoodScreen(), 
-            ),
-            SizedBox(height: 16),
-            _buildHealthSection(
-              context: context,
-              icon: Icons.directions_run_outlined,
-              title: 'Exercise Tips',
-              description: '60 Minutes Of Movement, Activity, Weekly, Workout, Calorie, Strength Training, Diet, Endurance, Flexibility Exercises',
-              destination: ExerciseScreen(), 
-            ),
-          ],
+      body: SingleChildScrollView(  
+        controller: scrollController,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildHealthSection(
+                context: context,
+                icon: Icons.health_and_safety_outlined,
+                title: 'Health Details',
+                description: 'Vital Signs And Physical Examination (Blood Pressure, Weight, Medical History, etc.)',
+                destination: DetailKesehatanScreen(),
+              ),
+              SizedBox(height: 16),
+              _buildHealthSection(
+                context: context,
+                icon: Icons.medical_information_outlined,
+                title: 'Disease Information',
+                description: 'Symptoms, Causes, Diagnosis, Treatment, Prevention, Risk Factors, Prognosis, and Medical Complications',
+                destination: PenyakitScreen(), 
+              ),
+              SizedBox(height: 16),
+              _buildHealthSection(
+                context: context,
+                icon: Icons.fastfood_outlined,
+                title: 'Food Tips',
+                description: 'Consumer Selected Meals, Fruits, Vegetables, Nutrition, Calorie Calculations, Healthy Eating, and to Sustain Nutrition',
+                destination: FoodScreen(), 
+              ),
+              SizedBox(height: 16),
+              _buildHealthSection(
+                context: context,
+                icon: Icons.directions_run_outlined,
+                title: 'Exercise Tips',
+                description: '60 Minutes Of Movement, Activity, Weekly, Workout, Calorie, Strength Training, Diet, Endurance, Flexibility Exercises',
+                destination: ExerciseScreen(), 
+              ),
+              
+            ],
+          ),
         ),
       ),
     );
