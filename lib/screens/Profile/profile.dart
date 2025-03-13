@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:login/screens/Profile/edit.dart';
 import 'package:login/screens/Profile/help.dart';
 import 'package:login/screens/Profile/keamanan.dart';
-import '../login.dart'; 
 
 class ProfileScreen extends StatelessWidget {
   @override
@@ -14,25 +13,19 @@ class ProfileScreen extends StatelessWidget {
         child: Column(
           children: [
             Container(
-              width: double.infinity,
               padding: EdgeInsets.all(15),
               decoration: BoxDecoration(
-                color: Color(0xFF11B3CF),
+                color: Colors.blue,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   CircleAvatar(
                     radius: 40,
                     backgroundImage: AssetImage('assets/profile_pic.png'), // Ganti dengan gambar yang sesuai
                   ),
                   SizedBox(height: 10),
-                  Text("Retno Dwi Astuti",
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold)),
+                  Text("Retno Dwi Astuti", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                   Text("Aktif", style: TextStyle(color: Colors.white70)),
                 ],
               ),
@@ -44,10 +37,7 @@ class ProfileScreen extends StatelessWidget {
             SizedBox(height: 20),
             TextButton(
               onPressed: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => LoginScreen()),
-                );
+                // Tambahkan fungsi logout di sini
               },
               child: Text("LOGOUT", style: TextStyle(color: Colors.red)),
             ),
@@ -59,7 +49,7 @@ class ProfileScreen extends StatelessWidget {
 
   Widget _buildMenuItem(BuildContext context, String title, IconData icon, Widget page) {
     return ListTile(
-      leading: Icon(icon, color: Color(0xFF11B3CF)),
+      leading: Icon(icon, color: Colors.blue),
       title: Text(title),
       trailing: Icon(Icons.arrow_forward_ios, size: 16),
       onTap: () {

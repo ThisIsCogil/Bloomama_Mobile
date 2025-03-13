@@ -3,6 +3,8 @@ import 'screens/home_screen.dart';
 import 'screens/kesehatan_screen.dart';
 import 'screens/mentor_screen.dart';
 import 'screens/profile_screen.dart';
+
+
 class AnimatedNavBar extends StatefulWidget {
   final int selectedIndex;
   final Function(int) onItemSelected;
@@ -86,7 +88,7 @@ class _AnimatedNavBarState extends State<AnimatedNavBar> {
             ),
             if (isSelected)
               Padding(
-                padding: const EdgeInsets.only(top: 2),
+                padding: const EdgeInsets.only(bottom: 6),
                 child: Text(
                   label,
                   style: TextStyle(
