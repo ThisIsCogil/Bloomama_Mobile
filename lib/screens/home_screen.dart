@@ -6,17 +6,18 @@ import 'calender.dart';
 class HomeScreen extends StatelessWidget {
   final ScrollController scrollController;
 
-  HomeScreen({required this.scrollController});
-
+  // Constructor to receive the scroll controller
+  const HomeScreen({Key? key, required this.scrollController}) : super(key: key);
 
   @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    backgroundColor: Color(0xFFF2F4F7),
-    body: SafeArea( // Tambahkan SafeArea di sini
+  Widget build(BuildContext context) {
+    // Remove the Scaffold from HomeScreen as it's already in MainScreen
+    // This prevents creating a solid background that blocks transparency
+    return SafeArea(
+      bottom: false, // Important: Don't add padding at bottom for transparent navbar
       child: SingleChildScrollView(
         controller: scrollController,
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 0), // Remove bottom padding
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -31,12 +32,13 @@ Widget build(BuildContext context) {
             _buildMakeAppointment(),
             SizedBox(height: 16),
             _buildSchedule(context),
+            // Add extra space at bottom for the bottom navigation bar
+            SizedBox(height: 90), // Increased padding to ensure content isn't hidden
           ],
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildUserProfile() {
     return Row(
@@ -61,87 +63,80 @@ Widget build(BuildContext context) {
   }
 
   Widget _buildStartJourney() {
-  return Container(
-    width: double.infinity,
-    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), 
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        colors: [Color(0xFF11B3CF), Colors.lightBlueAccent],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF11B3CF), Colors.lightBlueAccent],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            spreadRadius: 2,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.1),
-          blurRadius: 8,
-          spreadRadius: 2,
-          offset: Offset(0, 4),
-        ),
-      ],
-    ),
-    child: Row(
-      children: [
-       
-        Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white.withOpacity(0.3),
+      child: Row(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withOpacity(0.3),
+            ),
+            padding: EdgeInsets.all(8),
+            child: Icon(Icons.pregnant_woman, size: 45, color: Colors.white),
           ),
-          padding: EdgeInsets.all(8), // Ukuran padding lebih pas
-          child: Icon(Icons.pregnant_woman, size: 45, color: Colors.white), // Icon sedikit lebih besar
-        ),
-
-        SizedBox(width: 14),
-
-        // Bagian Kanan: Teks dan Tombol
-        Expanded(
-          child: Column(
-            mainAxisSize: MainAxisSize.min, // Mencegah overflow
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Start Your Journey",
-                style: TextStyle(
-                  fontSize: 20, // Font lebih besar dari sebelumnya
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+          SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Start Your Journey",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-              SizedBox(height: 6), // Jarak antar teks lebih proporsional
-              Text(
-                "Langkah pertama untuk Si Bayi!",
-                style: TextStyle(
-                  fontSize: 13, // Font lebih jelas
-                  color: Colors.white.withOpacity(0.9),
+                SizedBox(height: 6),
+                Text(
+                  "Langkah pertama untuk Si Bayi!",
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.white.withOpacity(0.9),
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-
-        SizedBox(width: 12),
-
-        ElevatedButton(
-          onPressed: () {},
-          child: Text("Start"),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.blue,
-            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8), // Tombol lebih nyaman ditekan
-            textStyle: TextStyle(fontSize: 14), // Ukuran teks tombol lebih proporsional
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+              ],
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
-
+          SizedBox(width: 12),
+          ElevatedButton(
+            onPressed: () {},
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.blue,
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              textStyle: TextStyle(fontSize: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Text("Start"),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildHealthyTracker() {
     return Column(
@@ -280,6 +275,10 @@ Widget build(BuildContext context) {
                     SizedBox(height: 8),
                     ElevatedButton(
                       onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF11B3CF),
+                        foregroundColor: Colors.white,
+                      ),
                       child: Text("Book"),
                     ),
                   ],
@@ -301,6 +300,10 @@ Widget build(BuildContext context) {
                     SizedBox(height: 8),
                     ElevatedButton(
                       onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF11B3CF),
+                        foregroundColor: Colors.white,
+                      ),
                       child: Text("Click"),
                     ),
                   ],
@@ -345,6 +348,10 @@ Widget build(BuildContext context) {
               Spacer(),
               ElevatedButton(
                 onPressed: () {},
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF11B3CF),
+                  foregroundColor: Colors.white,
+                ),
                 child: Text("Chat"),
               ),
             ],
@@ -355,86 +362,82 @@ Widget build(BuildContext context) {
   }
 
   Widget _buildSchedule(BuildContext context) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            "Kalendar",
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF11B3CF),
-            ),
-          ),
-          Row(
-            children: [
-              IconButton(
-                icon: Icon(Icons.calendar_month, color: Color(0xFF11B3CF)),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => FullCalendarScreen()),
-                  );
-                },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              "Kalendar",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF11B3CF),
               ),
-            ],
-          ),
-        ],
-      ),
-      SizedBox(height: 8),
-      EasyDateTimeLine(
-        initialDate: DateTime.now(),
-        activeColor: Color(0xFF11B3CF),
-        onDateChange: (date) {},
-        headerProps: EasyHeaderProps(
-          showHeader: false, // Sembunyikan teks hari di atas kotak tanggal
+            ),
+            IconButton(
+              icon: Icon(Icons.calendar_month, color: Color(0xFF11B3CF)),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => FullCalendarScreen()),
+                );
+              },
+            ),
+          ],
         ),
-        dayProps: EasyDayProps(
-          activeDayStyle: DayStyle(
-            decoration: BoxDecoration(
-              color: Color(0xFF11B3CF),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            dayNumStyle: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-            monthStrStyle: TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-            ),
-            dayStrStyle: TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-            ),
+        SizedBox(height: 8),
+        EasyDateTimeLine(
+          initialDate: DateTime.now(),
+          activeColor: Color(0xFF11B3CF),
+          onDateChange: (date) {},
+          headerProps: EasyHeaderProps(
+            showHeader: false,
           ),
-          inactiveDayStyle: DayStyle(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey.shade300),
+          dayProps: EasyDayProps(
+            activeDayStyle: DayStyle(
+              decoration: BoxDecoration(
+                color: Color(0xFF11B3CF),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              dayNumStyle: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+              monthStrStyle: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+              ),
+              dayStrStyle: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+              ),
             ),
-            dayNumStyle: TextStyle(
-              color: Colors.black,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-            monthStrStyle: TextStyle(
-              color: Colors.grey,
-              fontSize: 14,
-            ),
-            dayStrStyle: TextStyle(
-              color: Colors.grey,
-              fontSize: 14,
+            inactiveDayStyle: DayStyle(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              dayNumStyle: TextStyle(
+                color: Colors.black,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+              monthStrStyle: TextStyle(
+                color: Colors.grey,
+                fontSize: 14,
+              ),
+              dayStrStyle: TextStyle(
+                color: Colors.grey,
+                fontSize: 14,
+              ),
             ),
           ),
         ),
-      ),
-    ],
-  );
-}
+      ],
+    );
+  }
 }

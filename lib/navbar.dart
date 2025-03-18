@@ -14,6 +14,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        scaffoldBackgroundColor: Color(0xFFF2F4F7), // Base background for all screens
+      ),
       home: MainScreen(),
     );
   }
@@ -72,8 +75,8 @@ class _MainScreenState extends State<MainScreen> {
     ];
 
     return Scaffold(
-      extendBody: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: Color(0xFFF2F4F7), // Consistent background color
+      extendBody: true, // Allow content to extend behind the bottom nav bar
       body: _pages[_selectedIndex],
       bottomNavigationBar: SafeArea(
         child: AnimatedOpacity(
