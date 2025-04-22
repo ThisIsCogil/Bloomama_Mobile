@@ -288,7 +288,7 @@ class ChatScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
-                      "Yo, apa kabar?",
+                      "Helo Dawg, Selamat Siang?",
                       style: TextStyle(color: Colors.white),
                     ),
                   ),
