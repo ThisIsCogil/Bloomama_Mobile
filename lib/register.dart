@@ -1,8 +1,46 @@
 import 'package:flutter/material.dart';
 import 'login.dart';
 
-class RegisterScreen extends StatelessWidget {
+class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
+
+  @override
+  _RegisterScreenState createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
+  final TextEditingController _fullNameController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _fullNameController.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  void _handleRegister() {
+    final fullName = _fullNameController.text.trim();
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
+
+    // Nanti pakai untuk API call
+    print('Full Name: $fullName');
+    print('Username: $username');
+    print('Password: $password');
+    print('Confirm Password: $confirmPassword');
+
+    // Bisa tambah validasi di sini sebelum push atau API call
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,13 +84,16 @@ class RegisterScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const SizedBox(height: 20),
-                          _buildTextField('Full Name', Icons.contacts),
+                          _buildTextField('Full Name', Icons.contacts, _fullNameController),
                           const SizedBox(height: 10),
-                          _buildTextField('Username', Icons.person),
+                          _buildTextField('Username', Icons.person, _usernameController),
                           const SizedBox(height: 10),
-                          const PasswordTextField(),
+                          PasswordTextField(controller: _passwordController),
                           const SizedBox(height: 10),
-                          const PasswordTextField(label: 'Confirm Password'),
+                          PasswordTextField(
+                            label: 'Confirm Password',
+                            controller: _confirmPasswordController,
+                          ),
                           const SizedBox(height: 20),
                           SizedBox(
                             width: double.infinity,
@@ -64,13 +105,7 @@ class RegisterScreen extends StatelessWidget {
                                 ),
                                 backgroundColor: const Color(0xFF11B3CF),
                               ),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => const LoginScreen()),
-                                );
-                              },
+                              onPressed: _handleRegister,
                               child: const Text(
                                 "Register",
                                 style: TextStyle(
@@ -87,8 +122,7 @@ class RegisterScreen extends StatelessWidget {
                               onPressed: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(
-                                      builder: (context) => const LoginScreen()),
+                                  MaterialPageRoute(builder: (context) => const LoginScreen()),
                                 );
                               },
                               child: const Text(
@@ -110,10 +144,11 @@ class RegisterScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTextField(String label, IconData icon) {
+  Widget _buildTextField(String label, IconData icon, TextEditingController controller) {
     return SizedBox(
       width: double.infinity,
       child: TextFormField(
+        controller: controller,
         decoration: InputDecoration(
           labelText: label,
           labelStyle: const TextStyle(color: Colors.grey),
@@ -131,9 +166,15 @@ class RegisterScreen extends StatelessWidget {
   }
 }
 
+
 class PasswordTextField extends StatefulWidget {
   final String label;
-  const PasswordTextField({super.key, this.label = 'Password'});
+  final TextEditingController controller;
+  const PasswordTextField({
+    super.key,
+    this.label = 'Password',
+    required this.controller,
+  });
 
   @override
   _PasswordTextFieldState createState() => _PasswordTextFieldState();
@@ -147,6 +188,7 @@ class _PasswordTextFieldState extends State<PasswordTextField> {
     return SizedBox(
       width: double.infinity,
       child: TextFormField(
+        controller: widget.controller,
         obscureText: _obscureText,
         decoration: InputDecoration(
           labelText: widget.label,
@@ -175,3 +217,4 @@ class _PasswordTextFieldState extends State<PasswordTextField> {
     );
   }
 }
+

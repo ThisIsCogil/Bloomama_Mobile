@@ -15,24 +15,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     {
       'title': 'Education Resource',
       'image': 'assets/13.png',
-      'description': 'The app will provide educational resources to help users learn about maternal health, including articles, videos, and podcasts'
+      'description': 'Aplikasi ini akan menyediakan pendidikan untuk membantu pengguna belajar tentang kesehatan ibu, termasuk artikel, video, dan podcast.'
     },
     {
       'title': 'Tracking Tools',
       'image': 'assets/16.png',
-      'description': 'The app will provide tracking tools to help users monitor their pregnancy and postpartum progress, including weight tracking, contraction timing, and breastfeeding tracker.'
+      'description': 'Aplikasi ini akan menyediakan alat pelacakan untuk membantu pengguna memantau kemajuan kehamilan mereka, termasuk pelacakan berat badan.'
     },
     {
       'title': 'Lifesaving App',
       'image': 'assets/5.png',
-      'description': 'A lifesaving mobile app that monitors pregnant womens health, provides emergency assistance, and connects users to medical help when complications arise'
+      'description': 'Aplikasi mobile yang menyelamatkan jiwa yang memantau kesehatan ibu hamil, memberikan bantuan darurat, dan menghubungkan pengguna ke bantuan medis saat komplikasi muncul.'
     },
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Color(0xFFF2F4F7),
       body: SafeArea(
         child: Column(
           children: [

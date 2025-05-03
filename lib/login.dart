@@ -18,8 +18,37 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  _LoginScreenState createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _handleLogin() {
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text.trim();
+
+    // Di sini nanti kamu bisa panggil API pakai username & password
+    print('Username: $username');
+    print('Password: $password');
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => MainScreen()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,6 +95,7 @@ class LoginScreen extends StatelessWidget {
                           SizedBox(
                             width: double.infinity,
                             child: TextFormField(
+                              controller: _usernameController,
                               decoration: InputDecoration(
                                 labelText: 'Username',
                                 labelStyle: const TextStyle(color: Colors.grey),
@@ -83,7 +113,7 @@ class LoginScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 10),
-                          const PasswordTextField(), // Menggunakan widget password
+                          PasswordTextField(controller: _passwordController),
                           const SizedBox(height: 20),
                           SizedBox(
                             width: double.infinity,
@@ -95,20 +125,13 @@ class LoginScreen extends StatelessWidget {
                                 ),
                                 backgroundColor: const Color(0xFF11B3CF),
                               ),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => MainScreen()),
-                                );
-                              },
+                              onPressed: _handleLogin,
                               child: const Text(
                                 "Login",
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 18,
-                                  fontWeight:
-                                      FontWeight.bold, // Membuat teks bold
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
@@ -144,7 +167,8 @@ class LoginScreen extends StatelessWidget {
 }
 
 class PasswordTextField extends StatefulWidget {
-  const PasswordTextField({super.key});
+  final TextEditingController controller;
+  const PasswordTextField({super.key, required this.controller});
 
   @override
   _PasswordTextFieldState createState() => _PasswordTextFieldState();
@@ -158,6 +182,7 @@ class _PasswordTextFieldState extends State<PasswordTextField> {
     return SizedBox(
       width: double.infinity,
       child: TextFormField(
+        controller: widget.controller,
         obscureText: _obscureText,
         decoration: InputDecoration(
           labelText: 'Password',
@@ -186,6 +211,7 @@ class _PasswordTextFieldState extends State<PasswordTextField> {
     );
   }
 }
+
 
 class HeaderPainter extends CustomPainter {
   @override
