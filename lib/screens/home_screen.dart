@@ -2,22 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:easy_date_timeline/easy_date_timeline.dart';
 import 'calender.dart';
+import 'package:intl/intl.dart';
+import 'dart:math';
+import 'package:flutter/services.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   final ScrollController scrollController;
 
-  // Constructor to receive the scroll controller
   const HomeScreen({Key? key, required this.scrollController}) : super(key: key);
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool isRegistered = false;
+  DateTime? pregnancyStartDate;
+  
+
+  @override
   Widget build(BuildContext context) {
-    // Remove the Scaffold from HomeScreen as it's already in MainScreen
-    // This prevents creating a solid background that blocks transparency
     return SafeArea(
-      bottom: false, // Important: Don't add padding at bottom for transparent navbar
+      bottom: false,
       child: SingleChildScrollView(
-        controller: scrollController,
-        padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 0), // Remove bottom padding
+        controller: widget.scrollController,
+        padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -32,8 +41,7 @@ class HomeScreen extends StatelessWidget {
             _buildMakeAppointment(),
             SizedBox(height: 16),
             _buildSchedule(context),
-            // Add extra space at bottom for the bottom navigation bar
-            SizedBox(height: 90), // Increased padding to ensure content isn't hidden
+            SizedBox(height: 90),
           ],
         ),
       ),
@@ -63,80 +71,308 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildStartJourney() {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF11B3CF), Colors.lightBlueAccent],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    if (!isRegistered) {
+      // ➡️ Kondisi belum registrasi
+      return Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF11B3CF), Colors.lightBlueAccent],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              spreadRadius: 2,
+              offset: Offset(0, 4),
+            ),
+          ],
         ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            spreadRadius: 2,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.3),
+        child: Row(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.3),
+              ),
+              padding: EdgeInsets.all(8),
+              child: Icon(Icons.pregnant_woman, size: 45, color: Colors.white),
             ),
-            padding: EdgeInsets.all(8),
-            child: Icon(Icons.pregnant_woman, size: 45, color: Colors.white),
-          ),
-          SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Start Your Journey",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+            SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Start Your Journey",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-                SizedBox(height: 6),
-                Text(
-                  "Langkah pertama untuk Si Bayi!",
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.white.withOpacity(0.9),
+                  SizedBox(height: 6),
+                  Text(
+                    "Langkah pertama untuk Si Bayi!",
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.white.withOpacity(0.9),
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          SizedBox(width: 12),
-          ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.blue,
-              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              textStyle: TextStyle(fontSize: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                ],
               ),
             ),
-            child: Text("Start"),
+            SizedBox(width: 12),
+            ElevatedButton(
+              onPressed: () => _showRegistrationForm(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.blue,
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                textStyle: TextStyle(fontSize: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text("Start"),
+            ),
+          ],
+        ),
+      );
+    } else {
+      // ➡️ Kondisi sudah registrasi (tampilkan progress bar)
+      final int totalPregnancyDays = 900; // ~40 minggu * 7
+      final int currentDays = DateTime.now().difference(pregnancyStartDate!).inDays;
+      final double progress = min(currentDays / totalPregnancyDays, 1.0);
+
+      return Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF11B3CF), Colors.lightBlueAccent],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              spreadRadius: 2,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Pregnancy Progress",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            SizedBox(height: 12),
+            Text(
+              "Hari ke: $currentDays dari $totalPregnancyDays",
+              style: TextStyle(color: Colors.white),
+            ),
+            SizedBox(height: 12),
+            LinearProgressIndicator(
+              value: progress,
+              minHeight: 10,
+              backgroundColor: Colors.white.withOpacity(0.3),
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+void _showRegistrationForm() {
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController pregnantTimesController = TextEditingController();
+  final TextEditingController childCountController = TextEditingController();
+  final TextEditingController abortionCountController = TextEditingController();
+  DateTime? selectedDate;
+
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          "Registrasi Kehamilan",
+          style: TextStyle(
+            color: Color(0xFF11B3CF),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildTextField(nameController, "Nama Lengkap"),
+                  SizedBox(height: 12),
+                  _buildTextField(
+                    pregnantTimesController,
+                    "Hamil Berapa Kali",
+                    keyboardType: TextInputType.number,
+                  ),
+                  SizedBox(height: 12),
+                  _buildTextField(
+                    childCountController,
+                    "Jumlah Anak",
+                    keyboardType: TextInputType.number,
+                  ),
+                  SizedBox(height: 12),
+                  _buildTextField(
+                    abortionCountController,
+                    "Pernah Aborsi Berapa Kali",
+                    keyboardType: TextInputType.number,
+                  ),
+                  SizedBox(height: 12),
+                  InkWell(
+                    onTap: () async {
+                      DateTime? pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime.now(),
+                        builder: (context, child) {
+                          return Theme(
+                            data: Theme.of(context).copyWith(
+                              colorScheme: ColorScheme.light(
+                                primary: Color(0xFF11B3CF),
+                                onPrimary: Colors.white,
+                                onSurface: Colors.black,
+                              ),
+                              textButtonTheme: TextButtonThemeData(
+                                style: TextButton.styleFrom(
+                                  foregroundColor: Color(0xFF11B3CF),
+                                ),
+                              ),
+                            ),
+                            child: child!,
+                          );
+                        },
+                      );
+                      if (pickedDate != null) {
+                        setStateDialog(() {
+                          selectedDate = pickedDate;
+                        });
+                      }
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            selectedDate == null
+                                ? 'Tanggal Awal Kehamilan'
+                                : DateFormat('dd MMMM yyyy', 'id').format(selectedDate!),
+                            style: TextStyle(
+                              color: selectedDate == null ? Colors.grey : Colors.black,
+                            ),
+                          ),
+                          Icon(Icons.calendar_today, color: Color(0xFF11B3CF)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("Batal", style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color(0xFF11B3CF),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              if (nameController.text.isNotEmpty &&
+                  pregnantTimesController.text.isNotEmpty &&
+                  childCountController.text.isNotEmpty &&
+                  abortionCountController.text.isNotEmpty &&
+                  selectedDate != null) {
+                setState(() {
+                  isRegistered = true;
+                  pregnancyStartDate = selectedDate;
+                  // Optional: Simpan data lainnya ke state jika perlu
+                });
+                Navigator.pop(context);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("Lengkapi semua data terlebih dahulu!")),
+                );
+              }
+            },
+            child: Text("Daftar"),
           ),
         ],
+      );
+    },
+  );
+}
+
+Widget _buildTextField(TextEditingController controller, String label,
+    {TextInputType keyboardType = TextInputType.text}) {
+  return TextFormField(
+    controller: controller,
+    keyboardType: keyboardType,
+    inputFormatters: [
+      // Jika keyboardType adalah number, hanya izinkan angka
+      if (keyboardType == TextInputType.number) 
+        FilteringTextInputFormatter.digitsOnly,
+    ],
+    decoration: InputDecoration(
+      labelText: label,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: Color(0xFF11B3CF)),
+        borderRadius: BorderRadius.circular(8),
       ),
-    );
-  }
+    ),
+    validator: (value) {
+      // Validasi jika input kosong atau tidak sesuai
+      if (value == null || value.isEmpty) {
+        return 'Field ini tidak boleh kosong';
+      }
+      // Validasi hanya angka jika keyboardType adalah number
+      if (keyboardType == TextInputType.number && int.tryParse(value) == null) {
+        return 'Harus berupa angka';
+      }
+      return null;
+    },
+  );
+}
+
+
+
 
   Widget _buildHealthyTracker() {
     return Column(
