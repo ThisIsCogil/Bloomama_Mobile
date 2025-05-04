@@ -61,6 +61,8 @@ class _CustomCalendarPageState extends State<CustomCalendarPage> {
           icon: Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context), // Tombol Back
         ),
+        toolbarHeight: 40, // Kurangi tinggi AppBar
+        titleSpacing: 0,
       ),
       backgroundColor: const Color(0xFFF2F4F7),
       body: Column(
@@ -79,7 +81,6 @@ class _CustomCalendarPageState extends State<CustomCalendarPage> {
               ),
             ),
             padding: EdgeInsets.only(
-              top: MediaQuery.of(context).padding.top + 16,
               bottom: 20,
             ),
             child: Column(
@@ -87,12 +88,21 @@ class _CustomCalendarPageState extends State<CustomCalendarPage> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisSize: MainAxisSize
+                        .min, // Agar row hanya mengambil lebar seperlunya
+                    mainAxisAlignment:
+                        MainAxisAlignment.center, // Pusatkan konten
                     children: [
                       IconButton(
                         icon: Icon(Icons.chevron_left, size: 30),
                         onPressed: () => _changeMonth(-1),
+                        padding: EdgeInsets
+                            .zero, // Hilangkan padding default IconButton
+                        constraints:
+                            BoxConstraints(), // Hilangkan constraints default
                       ),
+                      SizedBox(
+                          width: 8), // Jarak antara ikon dan teks (sesuaikan)
                       Text(
                         DateFormat('MMMM yyyy').format(_currentMonth),
                         style: TextStyle(
@@ -101,9 +111,15 @@ class _CustomCalendarPageState extends State<CustomCalendarPage> {
                           color: Color(0xFF11B3CF),
                         ),
                       ),
+                      SizedBox(
+                          width: 8), // Jarak antara ikon dan teks (sesuaikan)
                       IconButton(
                         icon: Icon(Icons.chevron_right, size: 30),
                         onPressed: () => _changeMonth(1),
+                        padding: EdgeInsets
+                            .zero, // Hilangkan padding default IconButton
+                        constraints:
+                            BoxConstraints(), // Hilangkan constraints default
                       ),
                     ],
                   ),

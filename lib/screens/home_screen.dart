@@ -148,7 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     } else {
       // ➡️ Kondisi sudah registrasi (tampilkan progress bar)
-      final int totalPregnancyDays = 900; // ~40 minggu * 7
+      final int totalPregnancyDays = 280; // ~40 minggu * 7
       final int currentDays = DateTime.now().difference(pregnancyStartDate!).inDays;
       final double progress = min(currentDays / totalPregnancyDays, 1.0);
 
