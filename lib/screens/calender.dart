@@ -6,12 +6,14 @@ class Event {
   final String description;
   final TimeOfDay time;
   final String company;
+  final Color color; // Tambahkan ini
 
   Event({
     required this.title,
     required this.description,
     required this.time,
     required this.company,
+    required this.color, // Juga di sini
   });
 }
 
@@ -19,6 +21,17 @@ class CustomCalendarPage extends StatefulWidget {
   @override
   _CustomCalendarPageState createState() => _CustomCalendarPageState();
 }
+
+final List<Color> _eventColors = [
+  Colors.white,
+  Color(0xFFFFCDD2), // Red
+  Color(0xFFC8E6C9), // Green
+  Color(0xFFBBDEFB), // Blue
+  Color(0xFFFFF9C4), // Yellow
+  Color(0xFFD1C4E9), // Purple
+  Color(0xFFFFE0B2), // Orange
+  Color(0xFFB2EBF2), // Cyan
+];
 
 class _CustomCalendarPageState extends State<CustomCalendarPage> {
   DateTime _selectedDate = DateTime.now();
@@ -56,7 +69,7 @@ class _CustomCalendarPageState extends State<CustomCalendarPage> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xFFE3F2FD),
+        backgroundColor: Colors.white,
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context), // Tombol Back
@@ -70,15 +83,18 @@ class _CustomCalendarPageState extends State<CustomCalendarPage> {
           // Header bulan & timeline
           Container(
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFFE3F2FD), Color(0xFFBBDEFB)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
+              color: Colors.white,
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(20),
                 bottomRight: Radius.circular(20),
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 10,
+                  offset: Offset(0, 4),
+                ),
+              ],
             ),
             padding: EdgeInsets.only(
               bottom: 20,
@@ -126,7 +142,7 @@ class _CustomCalendarPageState extends State<CustomCalendarPage> {
                 ),
                 SizedBox(height: 16),
                 Container(
-                  height: 100,
+                  height: 80,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     itemCount: days.length,
@@ -147,12 +163,12 @@ class _CustomCalendarPageState extends State<CustomCalendarPage> {
                           });
                         },
                         child: Container(
-                          width: 60,
-                          margin: EdgeInsets.symmetric(horizontal: 6),
+                          width: 50,
+                          height: 40,
+                          margin: EdgeInsets.symmetric(horizontal: 4),
                           decoration: BoxDecoration(
-                            color: isSelected
-                                ? Color(0xFF11B3CF)
-                                : Colors.white.withOpacity(0.3),
+                            color:
+                                isSelected ? Color(0xFF11B3CF) : Colors.white,
                             borderRadius: BorderRadius.circular(12),
                             border: isToday
                                 ? Border.all(color: Color(0xFF11B3CF), width: 2)
@@ -177,7 +193,7 @@ class _CustomCalendarPageState extends State<CustomCalendarPage> {
                                   color: isSelected
                                       ? Colors.white
                                       : Colors.black87,
-                                  fontSize: 22,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -245,7 +261,7 @@ class _CustomCalendarPageState extends State<CustomCalendarPage> {
       itemBuilder: (context, index) {
         final event = events[index];
         return Card(
-          color: Colors.white,
+          color: event.color,
           margin: EdgeInsets.only(bottom: 16),
           elevation: 2,
           shape: RoundedRectangleBorder(
@@ -257,14 +273,14 @@ class _CustomCalendarPageState extends State<CustomCalendarPage> {
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: Color(0xFFE3F2FD),
+                color: event.color,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Center(
                 child: Text(
                   event.time.format(context),
                   style: TextStyle(
-                    color: Color(0xFF1976D2),
+                    color: Colors.black87,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -404,6 +420,8 @@ class _CustomCalendarPageState extends State<CustomCalendarPage> {
                     description: descController.text,
                     time: eventTime,
                     company: companyController.text,
+                    color: _eventColors[DateTime.now().millisecondsSinceEpoch %
+                        _eventColors.length], // warna acak
                   );
 
                   setState(() {
