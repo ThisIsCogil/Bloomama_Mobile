@@ -311,7 +311,7 @@ class _CustomCalendarPageState extends State<CustomCalendarPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Add Event', style: TextStyle(color: Color(0xFF1976D2))),
+          title: Text('Add Event', style: TextStyle(color: Color(0xFF11B3CF))),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -354,7 +354,7 @@ class _CustomCalendarPageState extends State<CustomCalendarPage> {
                             return Theme(
                               data: ThemeData.light().copyWith(
                                 colorScheme: ColorScheme.light(
-                                  primary: Color(0xFF1976D2),
+                                  primary: Color(0xFF11B3CF),
                                   onPrimary: Colors.white,
                                   surface: Colors.white,
                                   onSurface: Colors.black,
@@ -379,7 +379,7 @@ class _CustomCalendarPageState extends State<CustomCalendarPage> {
                         ),
                         child: Text(
                           eventTime.format(context),
-                          style: TextStyle(color: Color(0xFF1976D2)),
+                          style: TextStyle(color: Color(0xFF11B3CF)),
                         ),
                       ),
                     ),
@@ -395,7 +395,7 @@ class _CustomCalendarPageState extends State<CustomCalendarPage> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF1976D2),
+                backgroundColor: Color(0xFF11B3CF),
               ),
               onPressed: () {
                 if (titleController.text.isNotEmpty) {
