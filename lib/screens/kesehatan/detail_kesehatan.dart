@@ -14,7 +14,7 @@ class DetailKesehatanScreen extends StatelessWidget {
           },
         ),
         title: Text(
-          'Health Details', 
+          'Health Details',
           style: TextStyle(color: Colors.black),
         ),
         backgroundColor: Colors.transparent,
@@ -22,10 +22,7 @@ class DetailKesehatanScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: Icon(Icons.search, color: Colors.black),
-            onPressed: () {
-
-              
-            },
+            onPressed: () {},
           ),
         ],
       ),
@@ -58,28 +55,82 @@ class DetailKesehatanScreen extends StatelessWidget {
                           height: 150,
                           child: LineChart(
                             LineChartData(
-                              gridData: FlGridData(show: false),
-                              titlesData: FlTitlesData(show: false),
-                              borderData: FlBorderData(show: false),
+                              gridData: FlGridData(
+                                show: true,
+                                drawVerticalLine: false,
+                                getDrawingHorizontalLine: (value) => FlLine(
+                                  color: Colors.grey.withOpacity(0.2),
+                                  strokeWidth: 1,
+                                ),
+                              ),
+                              titlesData: FlTitlesData(
+                                leftTitles: AxisTitles(
+                                  sideTitles: SideTitles(
+                                    showTitles: true,
+                                    reservedSize: 30,
+                                    getTitlesWidget: (value, meta) {
+                                      return Text("${value.toInt()}",
+                                          style: TextStyle(fontSize: 12));
+                                    },
+                                  ),
+                                ),
+                                bottomTitles: AxisTitles(
+                                  sideTitles: SideTitles(
+                                    showTitles: true,
+                                    reservedSize: 22,
+                                    getTitlesWidget: (value, meta) {
+                                      return Text("${value.toInt()}",
+                                          style: TextStyle(fontSize: 12));
+                                    },
+                                  ),
+                                ),
+                                rightTitles: AxisTitles(
+                                    sideTitles: SideTitles(showTitles: false)),
+                                topTitles: AxisTitles(
+                                    sideTitles: SideTitles(showTitles: false)),
+                              ),
+                              borderData: FlBorderData(
+                                show: true,
+                                border: Border.all(
+                                    color: Colors.grey.withOpacity(0.5)),
+                              ),
                               lineBarsData: [
                                 LineChartBarData(
                                   spots: [
-                                    FlSpot(0, 3),
                                     FlSpot(1, 5),
-                                    FlSpot(2, 4),
-                                    FlSpot(3, 7),
-                                    FlSpot(4, 6),
-                                    FlSpot(5, 8),
-                                    FlSpot(6, 5),
+                                    FlSpot(2, 6),
+                                    FlSpot(3, 4),
+                                    FlSpot(4, 7),
+                                    FlSpot(5, 6.5),
+                                    FlSpot(6, 8),
                                     FlSpot(7, 7),
-                                    FlSpot(8, 6),
                                   ],
                                   isCurved: true,
-                                  color: Color(0xFF11B3CF),
-                                  barWidth: 3,
+                                  color: Colors.blueAccent,
+                                  barWidth: 4,
+                                  isStrokeCapRound: true,
                                   belowBarData: BarAreaData(
                                     show: true,
-                                    color: Color(0xFF11B3CF).withOpacity(0.3),
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        Colors.blueAccent.withOpacity(0.4),
+                                        Colors.transparent,
+                                      ],
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                    ),
+                                  ),
+                                  dotData: FlDotData(
+                                    show: true,
+                                    getDotPainter:
+                                        (spot, percent, barData, index) {
+                                      return FlDotCirclePainter(
+                                        radius: 4,
+                                        color: Colors.blueAccent,
+                                        strokeColor: Colors.white,
+                                        strokeWidth: 2,
+                                      );
+                                    },
                                   ),
                                 ),
                               ],
@@ -101,31 +152,36 @@ class DetailKesehatanScreen extends StatelessWidget {
                 SizedBox(height: 16),
                 _buildTestCard(
                   title: 'Blood Type and Rh Factor',
-                  description: 'Determines blood type and Rh compatibility to prevent potential complications during pregnancy.',
+                  description:
+                      'Determines blood type and Rh compatibility to prevent potential complications during pregnancy.',
                   date: 'First Trimester Screening',
                 ),
                 SizedBox(height: 16),
                 _buildTestCard(
                   title: 'Hemoglobin and Anemia Test',
-                  description: 'Checks for iron deficiency and anemia, crucial for maternal and fetal health.',
+                  description:
+                      'Checks for iron deficiency and anemia, crucial for maternal and fetal health.',
                   date: 'Regular Monitoring Throughout Pregnancy',
                 ),
                 SizedBox(height: 16),
                 _buildTestCard(
                   title: 'Gestational Diabetes Screening',
-                  description: 'Identifies high blood sugar levels that can develop during pregnancy, affecting mother and baby.',
+                  description:
+                      'Identifies high blood sugar levels that can develop during pregnancy, affecting mother and baby.',
                   date: '24-28 Weeks of Pregnancy',
                 ),
                 SizedBox(height: 16),
                 _buildTestCard(
                   title: 'STI Screening',
-                  description: 'Comprehensive test for sexually transmitted infections that could impact pregnancy and newborn health.',
+                  description:
+                      'Comprehensive test for sexually transmitted infections that could impact pregnancy and newborn health.',
                   date: 'Early Pregnancy Checkup',
                 ),
                 SizedBox(height: 16),
                 _buildTestCard(
                   title: 'Thyroid Function Test',
-                  description: 'Evaluates thyroid hormone levels, which are critical for fetal brain development and maternal health.',
+                  description:
+                      'Evaluates thyroid hormone levels, which are critical for fetal brain development and maternal health.',
                   date: 'First and Second Trimester',
                 ),
                 SizedBox(height: 16),
