@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'kesehatan/detail_kesehatan.dart'; 
-import 'kesehatan/penyakit.dart'; 
-import 'kesehatan/food_tips.dart'; 
-import 'kesehatan/olahraga.dart'; 
+import 'detail_kesehatan.dart'; 
+import 'penyakit.dart'; 
+import 'food_tips.dart'; 
+import 'olahraga.dart'; 
 
 class KesehatanScreen extends StatelessWidget {
   final ScrollController scrollController;

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'screens/home_screen.dart';
-import 'screens/kesehatan_screen.dart';
-import 'screens/mentor_screen.dart';
-import 'screens/profile_screen.dart';
+import 'screens/dashboard/home_screen.dart';
+import 'screens/kesehatan/kesehatan_screen.dart';
+import 'screens/mentor/mentor_screen.dart';
+import 'screens/Profile/profile_screen.dart';
 
 void main() {
   runApp(MyApp());

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:login/screens/Profile/edit.dart';
-import 'package:login/screens/Profile/help.dart';
-import 'package:login/screens/Profile/keamanan.dart';
+import 'package:login/views/screens/Profile/edit.dart';
+import 'package:login/views/screens/Profile/help.dart';
+import 'package:login/views/screens/Profile/keamanan.dart';
 
 class ProfileScreen extends StatelessWidget {
   @override

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../widgets/password_text_field.dart';
+import '../controllers/register_controller.dart';
 import 'login.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -12,7 +14,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+
+  late RegisterController _registerController;
+
+  @override
+  void initState() {
+    super.initState();
+    _registerController = RegisterController(
+      fullNameController: _fullNameController,
+      usernameController: _usernameController,
+      passwordController: _passwordController,
+      confirmPasswordController: _confirmPasswordController,
+    );
+  }
 
   @override
   void dispose() {
@@ -23,25 +39,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  void _handleRegister() {
-    final fullName = _fullNameController.text.trim();
-    final username = _usernameController.text.trim();
-    final password = _passwordController.text.trim();
-    final confirmPassword = _confirmPasswordController.text.trim();
-
-    // Nanti pakai untuk API call
-    print('Full Name: $fullName');
-    print('Username: $username');
-    print('Password: $password');
-    print('Confirm Password: $confirmPassword');
-
-    // Bisa tambah validasi di sini sebelum push atau API call
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,10 +46,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       backgroundColor: const Color(0xFFF2F4F7),
       body: Stack(
         children: [
-          CustomPaint(
-            size: Size(MediaQuery.of(context).size.width, 250),
-            painter: HeaderPainter(),
-          ),
+          // TODO: Import & pakai HeaderPainter jika sudah dipisah ke widget/header_painter.dart
           Padding(
             padding: const EdgeInsets.only(top: 120),
             child: Column(
@@ -84,15 +78,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const SizedBox(height: 20),
-                          _buildTextField('Full Name', Icons.contacts, _fullNameController),
+                          _buildTextField(
+                              'Full Name', Icons.contacts, _fullNameController),
                           const SizedBox(height: 10),
-                          _buildTextField('Username', Icons.person, _usernameController),
-                          const SizedBox(height: 10),
-                          PasswordTextField(controller: _passwordController),
+                          _buildTextField(
+                              'Username', Icons.person, _usernameController),
                           const SizedBox(height: 10),
                           PasswordTextField(
-                            label: 'Confirm Password',
+                            controller: _passwordController,
+                            showStrengthMeter: true,
+                            helperText: 'Min. 8 karakter',
+                          ),
+                          const SizedBox(height: 10),
+                          PasswordTextField(
                             controller: _confirmPasswordController,
+                            label: 'Confirm Password',
                           ),
                           const SizedBox(height: 20),
                           SizedBox(
@@ -105,7 +105,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ),
                                 backgroundColor: const Color(0xFF11B3CF),
                               ),
-                              onPressed: _handleRegister,
+                              onPressed: () =>
+                                  _registerController.handleRegister(context),
                               child: const Text(
                                 "Register",
                                 style: TextStyle(
@@ -122,7 +123,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               onPressed: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const LoginScreen()),
                                 );
                               },
                               child: const Text(
@@ -144,7 +147,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildTextField(String label, IconData icon, TextEditingController controller) {
+  Widget _buildTextField(
+      String label, IconData icon, TextEditingController controller) {
     return SizedBox(
       width: double.infinity,
       child: TextFormField(
@@ -153,8 +157,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           labelText: label,
           labelStyle: const TextStyle(color: Colors.grey),
           floatingLabelStyle: const TextStyle(color: Color(0xFF11B3CF)),
-          border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12)),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           prefixIcon: Icon(icon, color: const Color(0xFF11B3CF)),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
@@ -165,56 +168,3 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 }
-
-
-class PasswordTextField extends StatefulWidget {
-  final String label;
-  final TextEditingController controller;
-  const PasswordTextField({
-    super.key,
-    this.label = 'Password',
-    required this.controller,
-  });
-
-  @override
-  _PasswordTextFieldState createState() => _PasswordTextFieldState();
-}
-
-class _PasswordTextFieldState extends State<PasswordTextField> {
-  bool _obscureText = true;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: TextFormField(
-        controller: widget.controller,
-        obscureText: _obscureText,
-        decoration: InputDecoration(
-          labelText: widget.label,
-          labelStyle: const TextStyle(color: Colors.grey),
-          floatingLabelStyle: const TextStyle(color: Color(0xFF11B3CF)),
-          border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12)),
-          prefixIcon: const Icon(Icons.lock, color: Color(0xFF11B3CF)),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF11B3CF), width: 2.0),
-          ),
-          suffixIcon: IconButton(
-            icon: Icon(
-              _obscureText ? Icons.visibility_off : Icons.visibility,
-              color: Colors.grey,
-            ),
-            onPressed: () {
-              setState(() {
-                _obscureText = !_obscureText;
-              });
-            },
-          ),
-        ),
-      ),
-    );
-  }
-}
-

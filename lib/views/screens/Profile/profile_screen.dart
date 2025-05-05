@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:login/screens/Profile/edit.dart';
-import 'package:login/screens/Profile/help.dart';
-import 'package:login/screens/Profile/keamanan.dart';
-import '../login.dart'; 
+import 'package:login/views/screens/Profile/edit.dart';
+import 'package:login/views/screens/Profile/help.dart';
+import 'package:login/views/screens/Profile/keamanan.dart';
+import '../../login.dart'; 
 
 class ProfileScreen extends StatelessWidget {
   final ScrollController scrollController;

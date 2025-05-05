@@ -1,22 +1,8 @@
 import 'package:flutter/material.dart';
-import 'navbar.dart';
+import '../controllers/login_controller.dart';
+import '../widgets/password_text_field.dart';
+import '../widgets/header_painter.dart';
 import 'register.dart';
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: const LoginScreen(),
-    );
-  }
-}
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -28,26 +14,22 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  late LoginController _loginController;
+
+  @override
+  void initState() {
+    super.initState();
+    _loginController = LoginController(
+      usernameController: _usernameController,
+      passwordController: _passwordController,
+    );
+  }
 
   @override
   void dispose() {
     _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
-  }
-
-  void _handleLogin() {
-    final username = _usernameController.text.trim();
-    final password = _passwordController.text.trim();
-
-    // Di sini nanti kamu bisa panggil API pakai username & password
-    print('Username: $username');
-    print('Password: $password');
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => MainScreen()),
-    );
   }
 
   @override
@@ -99,7 +81,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               decoration: InputDecoration(
                                 labelText: 'Username',
                                 labelStyle: const TextStyle(color: Colors.grey),
-                                floatingLabelStyle: const TextStyle(color: Color(0xFF11B3CF)),
+                                floatingLabelStyle:
+                                    const TextStyle(color: Color(0xFF11B3CF)),
                                 border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12)),
                                 prefixIcon: const Icon(Icons.person,
@@ -113,7 +96,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           const SizedBox(height: 10),
-                          PasswordTextField(controller: _passwordController),
+                          PasswordTextField(
+                            controller: _passwordController,
+                            ),
                           const SizedBox(height: 20),
                           SizedBox(
                             width: double.infinity,
@@ -125,7 +110,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 backgroundColor: const Color(0xFF11B3CF),
                               ),
-                              onPressed: _handleLogin,
+                              onPressed: () =>
+                                  _loginController.handleLogin(context),
                               child: const Text(
                                 "Login",
                                 style: TextStyle(
@@ -143,7 +129,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => RegisterScreen()),
+                                      builder: (context) =>
+                                          const RegisterScreen()),
                                 );
                               },
                               child: const Text(
@@ -164,69 +151,4 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-}
-
-class PasswordTextField extends StatefulWidget {
-  final TextEditingController controller;
-  const PasswordTextField({super.key, required this.controller});
-
-  @override
-  _PasswordTextFieldState createState() => _PasswordTextFieldState();
-}
-
-class _PasswordTextFieldState extends State<PasswordTextField> {
-  bool _obscureText = true;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: TextFormField(
-        controller: widget.controller,
-        obscureText: _obscureText,
-        decoration: InputDecoration(
-          labelText: 'Password',
-          labelStyle: const TextStyle(color: Colors.grey),
-          floatingLabelStyle: const TextStyle(color: Color(0xFF11B3CF)),
-          border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12)),
-          prefixIcon: const Icon(Icons.lock, color: Color(0xFF11B3CF)),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF11B3CF), width: 2.0),
-          ),
-          suffixIcon: IconButton(
-            icon: Icon(
-              _obscureText ? Icons.visibility_off : Icons.visibility,
-              color: Colors.grey,
-            ),
-            onPressed: () {
-              setState(() {
-                _obscureText = !_obscureText;
-              });
-            },
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-
-class HeaderPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    Paint paint = Paint()..color = const Color(0xFF11B3CF);
-    Path path = Path()
-      ..lineTo(0, size.height - 50)
-      ..quadraticBezierTo(
-          size.width / 2, size.height, size.width, size.height - 50)
-      ..lineTo(size.width, 0)
-      ..close();
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
