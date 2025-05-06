@@ -1,33 +1,65 @@
 import 'package:flutter/material.dart';
 import 'login.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lottie/lottie.dart';
 
 class OnboardingScreen extends StatefulWidget {
   @override
   _OnboardingScreenState createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerProviderStateMixin {
   PageController _pageController = PageController();
   int _currentPage = 0;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
 
   List<Map<String, dynamic>> _slides = [
     {
       'title': 'Education Resource',
-      'image': 'assets/13.png',
+      'lottieFile': 'lottie/1.json', // Changed from image to lottieFile
       'description': 'Aplikasi ini akan menyediakan pendidikan untuk membantu pengguna belajar tentang kesehatan ibu, termasuk artikel, video, dan podcast.'
     },
     {
       'title': 'Tracking Tools',
-      'image': 'assets/16.png',
+      'lottieFile': 'lottie/2.json', // Changed from image to lottieFile
       'description': 'Aplikasi ini akan menyediakan alat pelacakan untuk membantu pengguna memantau kemajuan kehamilan mereka, termasuk pelacakan berat badan.'
     },
     {
       'title': 'Lifesaving App',
-      'image': 'assets/5.png',
+      'lottieFile': 'lottie/3.json', // Changed from image to lottieFile
       'description': 'Aplikasi mobile yang menyelamatkan jiwa yang memantau kesehatan ibu hamil, memberikan bantuan darurat, dan menghubungkan pengguna ke bantuan medis saat komplikasi muncul.'
     },
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 500),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeIn,
+      ),
+    );
+    _animationController.forward();
+    _pageController.addListener(() {
+      if (_pageController.page?.round() != _currentPage) {
+        _animationController.reset();
+        _animationController.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +80,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 itemBuilder: (context, index) {
                   return _buildOnboardingSlide(
                     title: _slides[index]['title'],
-                    image: _slides[index]['image'],
+                    lottieFile: _slides[index]['lottieFile'], // Updated parameter
                     description: _slides[index]['description'],
                   );
                 },
@@ -78,7 +110,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _buildOnboardingSlide({
     required String title,
-    required String image,
+    required String lottieFile, // Changed parameter from image to lottieFile
     required String description,
   }) {
     return Padding(
@@ -87,27 +119,40 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           SizedBox(height: 30),
-          Text(
-            title,
-            style: GoogleFonts.nanumPenScript(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFFFF4D8D),
+          FadeTransition(
+            opacity: _fadeAnimation,
+            child: Text(
+              title,
+              style: GoogleFonts.nanumPenScript(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFFFF4D8D),
+              ),
             ),
           ),
           SizedBox(height: 40),
-          Image.asset(
-            image,
-            height: 250,
+          FadeTransition(
+            opacity: _fadeAnimation,
+            child: Lottie.asset(
+              lottieFile, // Using Lottie instead of Image.asset
+              height: 250,
+              width: 250,
+              fit: BoxFit.contain,
+              repeat: true, // Animation will loop
+              reverse: false,
+            ),
           ),
           SizedBox(height: 40),
-          Text(
-            description,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.mitr(
-              fontSize: 14,
-              color: Colors.black87,
-              fontWeight: FontWeight.w300,
+          FadeTransition(
+            opacity: _fadeAnimation,
+            child: Text(
+              description,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.mitr(
+                fontSize: 14,
+                color: Colors.black87,
+                fontWeight: FontWeight.w300,
+              ),
             ),
           ),
         ],
@@ -116,7 +161,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildDotIndicator(int index) {
-    return Container(
+    return AnimatedContainer(
+      duration: Duration(milliseconds: 300),
       margin: EdgeInsets.symmetric(horizontal: 4.0),
       width: 10.0,
       height: 10.0,
@@ -130,58 +176,65 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildNavigationButtons() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Back button (not visible on first slide)
-          _currentPage > 0
-              ? TextButton(
-                  onPressed: () {
-                    _pageController.previousPage(
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Back button (not visible on first slide)
+            _currentPage > 0
+                ? TextButton(
+                    onPressed: () {
+                      _pageController.previousPage(
+                        duration: Duration(milliseconds: 300),
+                        curve: Curves.ease,
+                      );
+                    },
+                    child: Text(
+                      'BACK',
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  )
+                : Opacity(
+                    opacity: 0,
+                    child: TextButton(
+                      onPressed: null,
+                      child: Text('SKIP'),
+                    ),
+                  ),
+            AnimatedSwitcher(
+              duration: Duration(milliseconds: 300),
+              child: TextButton(
+                key: ValueKey(_currentPage),
+                onPressed: () {
+                  if (_currentPage < _slides.length - 1) {
+                    _pageController.nextPage(
                       duration: Duration(milliseconds: 300),
                       curve: Curves.ease,
                     );
-                  },
-                  child: Text(
-                    'BACK',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                )
-              : Opacity(
-                  opacity: 0,
-                  child: TextButton(
-                    onPressed: null,
-                    child: Text('SKIP'),
+                  } else {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => LoginScreen()),
+                    );
+                  }
+                },
+                child: Text(
+                  _currentPage == _slides.length - 1 ? 'GET STARTED' : 'NEXT',
+                  style: TextStyle(
+                    color: Color(0xFF2BACE2),
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-          TextButton(
-            onPressed: () {
-              if (_currentPage < _slides.length - 1) {
-                _pageController.nextPage(
-                  duration: Duration(milliseconds: 300),
-                  curve: Curves.ease,
-                );
-              } else {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => LoginScreen()),
-                );
-              }
-            },
-            child: Text(
-              'NEXT',
-              style: TextStyle(
-                color: Color(0xFF2BACE2),
-                fontWeight: FontWeight.w500,
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

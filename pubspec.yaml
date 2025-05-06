@@ -31,15 +31,19 @@ dependencies:
   flutter:
     sdk: flutter
 
-
-  flutter_native_splash: ^2.4.4
+  # Existing packages
+  
   fl_chart: ^0.70.2
   easy_date_timeline: ^2.0.9
   google_fonts: ^5.1.0 
   intl: ^0.19.0  
   table_calendar: ^3.0.9
-
   
+  # Animation packages for splash screen
+  flutter_spinkit: ^5.2.0    # Various loading animations
+  animated_text_kit: ^4.2.2  # Text animations
+  lottie: ^2.6.0            # Lottie animations
+  flutter_animate: ^4.5.0    # Animation utilities
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
