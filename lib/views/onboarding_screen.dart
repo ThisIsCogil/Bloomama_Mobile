@@ -17,17 +17,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
   List<Map<String, dynamic>> _slides = [
     {
       'title': 'Education Resource',
-      'lottieFile': 'lottie/1.json', // Changed from image to lottieFile
+      'lottieFile': 'assets/lottie/1.json', // Changed from image to lottieFile
       'description': 'Aplikasi ini akan menyediakan pendidikan untuk membantu pengguna belajar tentang kesehatan ibu, termasuk artikel, video, dan podcast.'
     },
     {
       'title': 'Tracking Tools',
-      'lottieFile': 'lottie/2.json', // Changed from image to lottieFile
+      'lottieFile': 'assets/lottie/2.json', // Changed from image to lottieFile
       'description': 'Aplikasi ini akan menyediakan alat pelacakan untuk membantu pengguna memantau kemajuan kehamilan mereka, termasuk pelacakan berat badan.'
     },
     {
       'title': 'Lifesaving App',
-      'lottieFile': 'lottie/3.json', // Changed from image to lottieFile
+      'lottieFile': 'assets/lottie/3.json', // Changed from image to lottieFile
       'description': 'Aplikasi mobile yang menyelamatkan jiwa yang memantau kesehatan ibu hamil, memberikan bantuan darurat, dan menghubungkan pengguna ke bantuan medis saat komplikasi muncul.'
     },
   ];

@@ -7,15 +7,21 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('id_ID', null);
   
-  runApp(
-    MaterialApp(
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: SplashSequence(
         child: OnboardingScreen(),
       ),
-    ),
-  );
+    );
+  }
 }
+
 
 class SplashSequence extends StatefulWidget {
   final Widget child;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/password_text_field.dart';
+import '../widgets/header_painter.dart';
 import '../controllers/register_controller.dart';
 import 'login.dart';
 
@@ -46,7 +47,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       backgroundColor: const Color(0xFFF2F4F7),
       body: Stack(
         children: [
-          // TODO: Import & pakai HeaderPainter jika sudah dipisah ke widget/header_painter.dart
+         CustomPaint(
+            size: Size(MediaQuery.of(context).size.width, 250),
+            painter: HeaderPainter(),
+          ),
           Padding(
             padding: const EdgeInsets.only(top: 120),
             child: Column(
