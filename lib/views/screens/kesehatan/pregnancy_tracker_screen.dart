@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-
 class PregnancyTrackerScreen extends StatefulWidget {
   final ScrollController scrollController;
 
@@ -301,8 +300,8 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
       'description':
           'The baby is fully developed and ready to meet you! The average baby weighs about 7.5 pounds at birth.',
       'emoji': '🎃',
-},
-};
+    },
+  };
 
   Widget _buildTabButton(String title, {required bool isSelected}) {
     return Padding(
@@ -354,68 +353,63 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
     );
   }
 
-  Widget _buildFeaturedVideoItem() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          height: 180,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.red,
-            borderRadius: BorderRadius.circular(8),
-            image: DecorationImage(
-              image: AssetImage('assets/profile_image.jpg'),
-              fit: BoxFit.cover,
-            ),
+Widget _buildFeaturedVideoItem() {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Container(
+        height: 180,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.blue,
+          borderRadius: BorderRadius.circular(8),
+          image: DecorationImage(
+            image: AssetImage('assets/profile_image.jpg'),
+            fit: BoxFit.cover,
           ),
         ),
-        SizedBox(height: 8),
-        Row(
-          children: [
-            CircleAvatar(
-              radius: 16,
-              backgroundImage: AssetImage('assets/profile_image.jpg'),
-            ),
-            SizedBox(width: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Video Title Here",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+      ),
+      SizedBox(height: 8),
+      Row(
+        children: [
+          CircleAvatar(
+            radius: 16,
+            backgroundImage: AssetImage('assets/profile_image.jpg'),
+          ),
+          SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Video Title Here",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14, // Ukuran font lebih kecil
+                ),
+              ),
+              Wrap(
+                spacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(
+                    "Channel Name",
+                    style: TextStyle(color: Colors.grey, fontSize: 12), // Ukuran font lebih kecil
                   ),
-                ),
-                Row(
-                  children: [
-                    Text(
-                      "Channel Name",
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 14,
-                      ),
-                    ),
-                    SizedBox(width: 4),
-                    Icon(Icons.check_circle, size: 14, color: Colors.grey),
-                    SizedBox(width: 4),
-                    Text(
-                      "12M views • 1 week ago",
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
-        ),
-      ],
-    );
-  }
+                  Icon(Icons.check_circle, size: 12, color: Colors.grey),
+                  Text(
+                    "12M views • 1 week ago",
+                    style: TextStyle(color: Colors.grey, fontSize: 12), // Ukuran font lebih kecil
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    ],
+  );
+}
+
 
   Widget _buildHistoryVideoItem() {
     return Column(
@@ -425,7 +419,7 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
           height: 60,
           width: 100,
           decoration: BoxDecoration(
-            color: Colors.red,
+            color: Colors.blue,
             borderRadius: BorderRadius.circular(4),
             image: DecorationImage(
               image: AssetImage('assets/profile_image.jpg'),
@@ -484,7 +478,7 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
             height: 70,
             width: 120,
             decoration: BoxDecoration(
-              color: Colors.red,
+              color: Colors.blue,
               borderRadius: BorderRadius.circular(6),
               image: DecorationImage(
                 image: AssetImage('assets/profile_image.jpg'),
@@ -536,53 +530,51 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
     );
   }
 
- Widget _getBabyImage() {
-  final String imagePath = 'assets/baby/minggu$_selectedWeek.png';
+  Widget _getBabyImage() {
+    final String imagePath = 'assets/baby/minggu$_selectedWeek.png';
 
-  return FutureBuilder<bool>(
-    future: _checkImageExists(imagePath),
-    builder: (context, snapshot) {
-      if (snapshot.connectionState == ConnectionState.waiting) {
-        return Center(child: CircularProgressIndicator());
-      }
+    return FutureBuilder<bool>(
+      future: _checkImageExists(imagePath),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
 
-      final bool exists = snapshot.data ?? false;
-      if (exists) {
-        return Image.asset(
-          imagePath,
-          height: 300, // atau sesuaikan sesuai kebutuhan
-          fit: BoxFit.contain,
-        );
-      } else {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.image_not_supported, size: 40, color: Colors.grey),
-            SizedBox(height: 6), // kecilkan dari 10 ke 6
-            Text(
-              'Gambar minggu$_selectedWeek tidak tersedia',
-              style: TextStyle(color: Colors.grey, fontSize: 14),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        );
-      }
-    },
-  );
-}
-
+        final bool exists = snapshot.data ?? false;
+        if (exists) {
+          return Image.asset(
+            imagePath,
+            height: 300, // atau sesuaikan sesuai kebutuhan
+            fit: BoxFit.contain,
+          );
+        } else {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.image_not_supported, size: 40, color: Colors.grey),
+              SizedBox(height: 6), // kecilkan dari 10 ke 6
+              Text(
+                'Gambar minggu$_selectedWeek tidak tersedia',
+                style: TextStyle(color: Colors.grey, fontSize: 14),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          );
+        }
+      },
+    );
+  }
 
 // Helper method to check if an asset image exists
-Future<bool> _checkImageExists(String assetPath) async {
-  try {
-    await rootBundle.load(assetPath);
-    return true;
-  } catch (e) {
-    debugPrint('Image not found: $assetPath');
-    return false;
+  Future<bool> _checkImageExists(String assetPath) async {
+    try {
+      await rootBundle.load(assetPath);
+      return true;
+    } catch (e) {
+      debugPrint('Image not found: $assetPath');
+      return false;
+    }
   }
-}
-
 
   Widget _buildInfoBox(
       {required String title, required String value, required Color color}) {
@@ -622,8 +614,6 @@ Future<bool> _checkImageExists(String assetPath) async {
     );
   }
 
-  
-
   Widget _buildScreeningItem(
       {required String title,
       required String description,
@@ -632,7 +622,8 @@ Future<bool> _checkImageExists(String assetPath) async {
       margin: EdgeInsets.only(bottom: 16),
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDue ? Colors.blue.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+        color:
+            isDue ? Colors.blue.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -816,7 +807,6 @@ Future<bool> _checkImageExists(String assetPath) async {
                       ),
               ),
             ),
-
             Container(
               decoration: BoxDecoration(
                 border: Border(
@@ -850,7 +840,6 @@ Future<bool> _checkImageExists(String assetPath) async {
                 ],
               ),
             ),
-            
             Expanded(
               child: TabBarView(
                 children: [
@@ -881,9 +870,11 @@ Future<bool> _checkImageExists(String assetPath) async {
                                     },
                                     child: Container(
                                       width: 40,
-                                      margin: EdgeInsets.symmetric(horizontal: 4),
+                                      margin:
+                                          EdgeInsets.symmetric(horizontal: 4),
                                       child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
                                         children: [
                                           Text(
                                             weekNum.toString(),
@@ -899,14 +890,16 @@ Future<bool> _checkImageExists(String assetPath) async {
                                           ),
                                           SizedBox(height: 6),
                                           AnimatedContainer(
-                                            duration: Duration(milliseconds: 200),
+                                            duration:
+                                                Duration(milliseconds: 200),
                                             width: isSelected ? 16 : 0,
                                             height: 2,
                                             decoration: BoxDecoration(
                                               color: isSelected
                                                   ? Color(0xFF10B2CF)
                                                   : Colors.transparent,
-                                              borderRadius: BorderRadius.circular(1),
+                                              borderRadius:
+                                                  BorderRadius.circular(1),
                                             ),
                                           ),
                                         ],
@@ -943,12 +936,16 @@ Future<bool> _checkImageExists(String assetPath) async {
                               SizedBox(height: 8),
                               Row(
                                 children: [
-                                  Text(
-                                    _weekData[_selectedWeek]?['size'] ?? "Unknown size",
-                                    style: TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.black87,
+                                  Flexible(
+                                    child: Text(
+                                      _weekData[_selectedWeek]?['size'] ??
+                                          "Unknown size",
+                                      style: TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.black87,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                   SizedBox(width: 5),
@@ -996,7 +993,8 @@ Future<bool> _checkImageExists(String assetPath) async {
                                       ],
                                     ),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           "Data Appointment",
@@ -1007,26 +1005,35 @@ Future<bool> _checkImageExists(String assetPath) async {
                                         ),
                                         SizedBox(height: 12),
                                         Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
                                           children: [
                                             _buildInfoBox(
                                               title: "Tekanan Darah",
-                                              value: _weekData[_selectedWeek]?['bp'] ?? "-",
+                                              value: _weekData[_selectedWeek]
+                                                      ?['bp'] ??
+                                                  "-",
                                               color: Colors.redAccent,
                                             ),
                                             _buildInfoBox(
                                               title: "Berat Badan",
-                                              value: _weekData[_selectedWeek]?['weight'] ?? "-",
+                                              value: _weekData[_selectedWeek]
+                                                      ?['weight'] ??
+                                                  "-",
                                               color: Colors.green,
                                             ),
                                             _buildInfoBox(
                                               title: "Tinggi Badan",
-                                              value: _weekData[_selectedWeek]?['height'] ?? "-",
+                                              value: _weekData[_selectedWeek]
+                                                      ?['height'] ??
+                                                  "-",
                                               color: Colors.orange,
                                             ),
                                             _buildInfoBox(
                                               title: "Detak Jantung",
-                                              value: _weekData[_selectedWeek]?['heartRate'] ?? "-",
+                                              value: _weekData[_selectedWeek]
+                                                      ?['heartRate'] ??
+                                                  "-",
                                               color: Colors.purple,
                                             ),
                                           ],
@@ -1052,10 +1059,12 @@ Future<bool> _checkImageExists(String assetPath) async {
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.grey.shade300),
+                                  border:
+                                      Border.all(color: Colors.grey.shade300),
                                 ),
                                 child: Text(
-                                  _weekData[_selectedWeek]?['notes'] ?? "Belum ada catatan.",
+                                  _weekData[_selectedWeek]?['notes'] ??
+                                      "Belum ada catatan.",
                                   style: TextStyle(
                                     fontSize: 16,
                                     color: Colors.black87,
@@ -1073,13 +1082,15 @@ Future<bool> _checkImageExists(String assetPath) async {
 
                   // Second Tab - Tips & Trik
                   SingleChildScrollView(
+                    controller: widget.scrollController,
+                    padding: EdgeInsets.only(bottom: 100),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        
                         // Category buttons
                         Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 12.0, horizontal: 16.0),
                           child: SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             child: Row(
@@ -1096,7 +1107,7 @@ Future<bool> _checkImageExists(String assetPath) async {
                             ),
                           ),
                         ),
-                        
+
                         // Video Terbaru section
                         Padding(
                           padding: const EdgeInsets.all(16.0),
@@ -1115,7 +1126,7 @@ Future<bool> _checkImageExists(String assetPath) async {
                             ],
                           ),
                         ),
-                        
+
                         // History Tontonan section
                         Padding(
                           padding: const EdgeInsets.all(16.0),
@@ -1146,7 +1157,7 @@ Future<bool> _checkImageExists(String assetPath) async {
                             ],
                           ),
                         ),
-                        
+
                         // Video section
                         Padding(
                           padding: const EdgeInsets.all(16.0),
