@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'calender.dart';
 import '../kesehatan/pregnancy_tracker_screen.dart';
+import 'registration_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final ScrollController scrollController;
@@ -29,12 +30,22 @@ class MidwifeVisit {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Mock pregnancy data - in a real app, this would come from a database or API
-  bool hasPregnancyData = true; // Toggle this to test both states
+  // Set initial state to show user doesn't have pregnancy data
+  bool hasPregnancyData = false;
+  
+  // Pregnancy data fields
+  String userName = "Adam";
   DateTime? dueDate;
-  int pregnancyWeeks = 12;
-  int pregnancyDays = 6;
+  int pregnancyWeeks = 0;
+  int pregnancyDays = 0;
   String trimester = "First trimester";
+  int totalPregnancyDays = 0;
+  
+  // User pregnancy history
+  int pregnancyCount = 0;
+  int childrenCount = 0;
+  int abortionCount = 0;
+  DateTime? firstDayOfPregnancy;
 
   // Mock health data
   String weight = "58 kg";
@@ -45,10 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Calculate due date (for example purposes)
-    if (hasPregnancyData) {
-      dueDate = DateTime(2025, 11, 14);
-    }
+    // Due date will be calculated after registration
   }
 
   @override
@@ -56,59 +64,19 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       extendBody: true,
-      body: Stack(
-        children: [
-          // Main content with padding at the bottom for navbar space
-          SingleChildScrollView(
-            controller: widget.scrollController,
-            padding: EdgeInsets.only(bottom: 80), // Add padding for navbar
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(
-                    height: MediaQuery.of(context)
-                        .padding
-                        .top), // Status bar height
-                _buildHeader(),
-                _buildPregnancyCard(),
-                _buildHealthData(),
-                _buildArticlesSection(),
-              ],
-            ),
-          ),
-          // Overlay for when no pregnancy data is available
-          if (!hasPregnancyData)
-            Container(
-              color: Colors.black.withOpacity(0.6),
-              child: Center(
-                child: ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      hasPregnancyData = true;
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF10B2CF),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 16,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                  child: const Text(
-                    "Start Now",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
+      body: SingleChildScrollView(
+        controller: widget.scrollController,
+        padding: EdgeInsets.only(bottom: 80), // Add padding for navbar
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(height: MediaQuery.of(context).padding.top), // Status bar height
+            _buildHeader(),
+            _buildPregnancyCard(),
+            _buildHealthData(),
+            _buildArticlesSection(),
+          ],
+        ),
       ),
     );
   }
@@ -190,32 +158,32 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          if (hasPregnancyData)
-            SizedBox(
-              height: 180,
-              child: Stack(
-                children: [
-                  // 1. Ikon di bagian atas-tengah (prioritas utama)
-                  Positioned(
-                    top: 0, // Atur nilai ini untuk mengatur jarak dari atas
-                    left: 0,
-                    right: 0,
-                    bottom: 100,
-                    child: Center(
-                      child: Icon(
-                        Icons.child_friendly,
-                        size: 120,
-                        color: Colors.grey[400],
-                      ),
+          SizedBox(
+            height: 180,
+            child: Stack(
+              children: [
+                // Icon in the top-middle
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 100,
+                  child: Center(
+                    child: Icon(
+                      Icons.child_friendly,
+                      size: 120,
+                      color: Colors.grey[400],
                     ),
                   ),
+                ),
 
-                  // 2. Teks hari di kiri bawah
+                // Show day count only if user has pregnancy data
+                if (hasPregnancyData)
                   Positioned(
                     left: 24,
                     bottom: 24,
                     child: Text(
-                      "Day ${pregnancyWeeks * 7 + pregnancyDays}",
+                      "Day ${totalPregnancyDays}",
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -223,38 +191,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
-                ],
-              ),
-            )
-          else
-            Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    hasPregnancyData = true;
-                  });
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF10B2CF),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 16,
-                  ),
-                ),
-                child: const Text(
-                  "Start Now",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+              ],
             ),
+          ),
         ],
       ),
     );
@@ -276,71 +215,143 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "$pregnancyWeeks weeks, $pregnancyDays days pregnant",
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            trimester,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-              color: Colors.grey[600],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Text(
-                "Due ${DateFormat('dd MMM').format(dueDate!)}",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey[600],
+      child: hasPregnancyData
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "$pregnancyWeeks weeks, $pregnancyDays days pregnant",
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                 ),
-              ),
-              const Spacer(),
-              TextButton(
-                onPressed: () {},
-                child: Text(
-                  "Edit",
+                const SizedBox(height: 8),
+                Text(
+                  trimester,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF10B2CF),
+                    color: Colors.grey[600],
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: LinearProgressIndicator(
-              value: (pregnancyWeeks * 7 + pregnancyDays) /
-                  280, // Approximate total days in pregnancy
-              minHeight: 16,
-              backgroundColor: Colors.blue[100],
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF10B2CF)),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Text(
+                      dueDate != null ? "Due ${DateFormat('dd MMM').format(dueDate!)}" : "",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    const Spacer(),
+                    TextButton(
+                      onPressed: () {},
+                      child: Text(
+                        "Edit",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF10B2CF),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: LinearProgressIndicator(
+                    value: totalPregnancyDays / 280, // Approximate total days in pregnancy
+                    minHeight: 16,
+                    backgroundColor: Colors.blue[100],
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF10B2CF)),
+                  ),
+                ),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  "Track Your Pregnancy",
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  "Register to track your pregnancy progress, health data, and get personalized advice",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () {
+                    // Navigate to registration screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PregnancyRegistrationScreen(
+                          onRegistrationComplete: (pregnancyData) {
+                            setState(() {
+                              hasPregnancyData = true;
+                              
+                              // Update user data
+                              userName = pregnancyData.fullName;
+                              pregnancyCount = pregnancyData.pregnancyCount;
+                              childrenCount = pregnancyData.childrenCount;
+                              abortionCount = pregnancyData.abortionCount;
+                              firstDayOfPregnancy = pregnancyData.firstDayOfPregnancy;
+                              
+                              // Update pregnancy progress data
+                              dueDate = pregnancyData.dueDate;
+                              pregnancyWeeks = pregnancyData.currentWeeks;
+                              pregnancyDays = pregnancyData.currentDays;
+                              trimester = pregnancyData.trimester;
+                              totalPregnancyDays = pregnancyData.totalDays;
+                            });
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF10B2CF),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  child: const Text(
+                    "Start Now",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
     );
   }
 
   Widget _buildHealthData() {
     return Column(
       children: [
-        if (hasPregnancyData) _buildPregnancyInfo(),
+        _buildPregnancyInfo(),
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           padding: const EdgeInsets.all(16.0),
@@ -373,22 +384,22 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   _buildInfoBox(
                     title: "Tekanan Darah",
-                    value: "120/80", // langsung isi nilai
+                    value: "120/80",
                     color: Colors.redAccent,
                   ),
                   _buildInfoBox(
                     title: "Berat Badan",
-                    value: "60 kg", // langsung isi nilai
+                    value: "60 kg",
                     color: Colors.green,
                   ),
                   _buildInfoBox(
                     title: "Tinggi Badan",
-                    value: "30 cm", // langsung isi nilai
+                    value: "30 cm",
                     color: Colors.orange,
                   ),
                   _buildInfoBox(
                     title: "Detak Jantung",
-                    value: "2 bpm", // langsung isi nilai
+                    value: "2 bpm",
                     color: Colors.purple,
                   ),
                 ],
@@ -554,9 +565,9 @@ class _HomeScreenState extends State<HomeScreen> {
           show: true,
           border: Border.all(color: Colors.grey[300]!),
         ),
-        minX: minX - 1, // tambahkan margin jika perlu
+        minX: minX - 1,
         maxX: maxX + 1,
-        minY: (minY - 10).clamp(0, minY), // biar gak negatif
+        minY: (minY - 10).clamp(0, minY),
         maxY: maxY + 10,
         lineBarsData: [
           // Blood Pressure Line
