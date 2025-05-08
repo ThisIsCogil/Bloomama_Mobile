@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'calender.dart';
-import '../kesehatan/pregnancy_tracker_screen.dart';
 import 'registration_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -62,11 +61,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFFF8FDFF),
       extendBody: true,
       body: SingleChildScrollView(
         controller: widget.scrollController,
-        padding: EdgeInsets.only(bottom: 80), // Add padding for navbar
+        padding: const EdgeInsets.only(bottom: 80), // Add padding for navbar
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -92,23 +91,59 @@ class _HomeScreenState extends State<HomeScreen> {
             style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
+              color: Color(0xFF263238),
             ),
           ),
           Row(
             children: [
-              IconButton(
-                icon: Icon(Icons.notifications_outlined, size: 28),
-                onPressed: () {},
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.15),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.notifications_outlined,
+                    size: 28,
+                    color: Color(0xFF00838F),
+                  ),
+                  onPressed: () {},
+                ),
               ),
-              IconButton(
-                icon: Icon(Icons.calendar_month_outlined, size: 28),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => CustomCalendarPage()),
-                  );
-                },
+              const SizedBox(width: 12),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.15),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.calendar_month_outlined,
+                    size: 28,
+                    color: Color(0xFF00838F),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => CustomCalendarPage()),
+                    );
+                  },
+                ),
               ),
             ],
           ),
@@ -117,101 +152,118 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildPregnancyCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 8,
-            offset: Offset(0, 4),
-          ),
-        ],
+Widget _buildPregnancyCard() {
+  return Container(
+    margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+    decoration: BoxDecoration(
+      gradient: const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFF1565C0), Color(0xFF0D47A1)],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "Good afternoon,",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black87,
-                  ),
+      borderRadius: BorderRadius.circular(20),
+      boxShadow: [
+        BoxShadow(
+          color: const Color(0xFF1E88E5).withOpacity(0.2),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Good afternoon,",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
                 ),
-                const Text(
-                  "Adam",
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
+              ),
+              const Text(
+                "Adam",
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFFBBDEFB),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          SizedBox(
-            height: 180,
-            child: Stack(
-              children: [
-                // Icon in the top-middle
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 100,
-                  child: Center(
-                    child: Icon(
-                      Icons.child_friendly,
-                      size: 120,
-                      color: Colors.grey[400],
-                    ),
+        ),
+        SizedBox(
+          height: 180,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: CustomPaint(
+                    painter: CirclePatternPainter(color: const Color(0xFF1E88E5).withOpacity(0.2)),
                   ),
                 ),
-
-                // Show day count only if user has pregnancy data
-                if (hasPregnancyData)
-                  Positioned(
-                    left: 24,
-                    bottom: 24,
+              ),
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 100,
+                child: Center(
+                  child: Icon(
+                    Icons.child_friendly,
+                    size: 120,
+                    color: const Color(0xFF42A5F5),
+                  ),
+                ),
+              ),
+              if (hasPregnancyData)
+                Positioned(
+                  left: 10,
+                  bottom: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    
                     child: Text(
                       "Day ${totalPregnancyDays}",
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: Colors.white,
                       ),
                     ),
                   ),
-              ],
-            ),
+                ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
-
+        ),
+      ],
+    ),
+  );
+}
+  
   Widget _buildPregnancyInfo() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(20.0),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Colors.white, Color(0xFFE0F7FA)],
+        ),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withOpacity(0.15),
             spreadRadius: 1,
-            blurRadius: 5,
-            offset: const Offset(0, 2),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -219,78 +271,181 @@ class _HomeScreenState extends State<HomeScreen> {
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  "$pregnancyWeeks weeks, $pregnancyDays days pregnant",
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE0F7FA),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    "$pregnancyWeeks weeks, $pregnancyDays days pregnant",
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF00838F),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  trimester,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 Row(
                   children: [
-                    Text(
-                      dueDate != null ? "Due ${DateFormat('dd MMM').format(dueDate!)}" : "",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.grey[600],
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFB2EBF2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.calendar_today_rounded,
+                        color: Color(0xFF006064),
+                        size: 20,
                       ),
                     ),
-                    const Spacer(),
-                    TextButton(
-                      onPressed: () {},
-                      child: Text(
-                        "Edit",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF10B2CF),
-                        ),
+                    const SizedBox(width: 10),
+                    Text(
+                      trimester,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF455A64),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: LinearProgressIndicator(
-                    value: totalPregnancyDays / 280, // Approximate total days in pregnancy
-                    minHeight: 16,
-                    backgroundColor: Colors.blue[100],
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF10B2CF)),
-                  ),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFB2EBF2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.event,
+                        color: Color(0xFF006064),
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      dueDate != null ? "Due ${DateFormat('dd MMM').format(dueDate!)}" : "",
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF455A64),
+                      ),
+                    ),
+                    const Spacer(),
+                    TextButton.icon(
+                      onPressed: () {},
+                      icon: const Icon(
+                        Icons.edit_outlined,
+                        size: 18,
+                        color: Color(0xFF0097A7),
+                      ),
+                      label: const Text(
+                        "Edit",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF0097A7),
+                        ),
+                      ),
+                      style: TextButton.styleFrom(
+                        backgroundColor: const Color(0xFFE0F7FA),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "Progress",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF455A64),
+                          ),
+                        ),
+                        Text(
+                          "${(totalPregnancyDays / 280 * 100).toStringAsFixed(1)}%",
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF00838F),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: LinearProgressIndicator(
+                            value: totalPregnancyDays / 280, // Approximate total days in pregnancy
+                            minHeight: 16,
+                            backgroundColor: const Color(0xFFB2EBF2),
+                            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF00ACC1)),
+                          ),
+                        ),
+                        // Add tiny baby icon at the progress position
+                        Positioned(
+                          left: (totalPregnancyDays / 280) * MediaQuery.of(context).size.width * 0.85 - 10,
+                          top: 0,
+                          child: const Icon(
+                            Icons.child_care,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ],
             )
           : Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE0F7FA),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(
+                    Icons.favorite_rounded,
+                    size: 48,
+                    color: Color(0xFF00838F),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
                   "Track Your Pregnancy",
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: Color(0xFF00838F),
                   ),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   "Register to track your pregnancy progress, health data, and get personalized advice",
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 16,
-                    color: Colors.grey[600],
+                    color: Color(0xFF546E7A),
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -325,22 +480,35 @@ class _HomeScreenState extends State<HomeScreen> {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF10B2CF),
                     foregroundColor: Colors.white,
+                    backgroundColor: const Color(0xFF00ACC1),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 32,
                       vertical: 16,
                     ),
+                    elevation: 3,
+                    shadowColor: const Color(0xFF00ACC1).withOpacity(0.4),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
                   ),
-                  child: const Text(
-                    "Start Now",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Text(
+                        "Start Now",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 20,
+                        color: Colors.white,
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -816,4 +984,34 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
 }
+
+class CirclePatternPainter extends CustomPainter {
+    final Color color;
+    
+    CirclePatternPainter({required this.color});
+    
+    @override
+    void paint(Canvas canvas, Size size) {
+      final paint = Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5;
+        
+      canvas.drawCircle(
+        Offset(size.width * 0.8, size.height * 0.3),
+        size.width * 0.15,
+        paint
+      );
+      
+      canvas.drawCircle(
+        Offset(size.width * 0.2, size.height * 0.7),
+        size.width * 0.1,
+        paint
+      );
+    }
+    
+    @override
+    bool shouldRepaint(CustomPainter oldDelegate) => false;
+  }

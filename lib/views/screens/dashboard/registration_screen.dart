@@ -93,7 +93,7 @@ class _PregnancyRegistrationScreenState extends State<PregnancyRegistrationScree
   int _pregnancyCount = 1;
   int _childrenCount = 0;
   int _abortionCount = 0;
-  DateTime _selectedDate = DateTime.now().subtract(const Duration(days: 30)); // Default to 30 days ago
+  DateTime _selectedDate = DateTime.now(); // Default to today's date
   
   @override
   void dispose() {
@@ -123,7 +123,7 @@ class _PregnancyRegistrationScreenState extends State<PregnancyRegistrationScree
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDate, 
+      initialDate: DateTime.now(), // Always use today's date as initialDate when opening picker
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
       helpText: 'SELECT FIRST DAY OF PREGNANCY',
