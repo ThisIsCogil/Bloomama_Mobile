@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 class PregnancyTrackerScreen extends StatefulWidget {
   final ScrollController scrollController;
 
-  const PregnancyTrackerScreen({Key? key, required this.scrollController}) : super(key: key);
+  const PregnancyTrackerScreen({Key? key, required this.scrollController})
+      : super(key: key);
 
   @override
   State<PregnancyTrackerScreen> createState() => _PregnancyTrackerScreenState();
@@ -22,8 +23,8 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
       'emoji': '🌱',
       'bp': '110/70',
       'weight': '50 kg',
-      'height': '160 cm',
-      'heartRate': '120 bpm',
+      'height': '60 cm',
+      'heartRate': '23 bpm',
       'notes': 'Semua normal, lanjutkan makan bergizi.',
     },
     2: {
@@ -307,401 +308,421 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
       length: 2,
       child: Scaffold(
         backgroundColor: Color(0xFFF2F4F7),
-        body: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                child: AnimatedSwitcher(
-                  duration: Duration(milliseconds: 250),
-                  transitionBuilder: (child, animation) {
-                    return FadeTransition(
-                      opacity: animation,
-                      child: child,
-                    );
-                  },
-                  child: isSearching
-                      ? Row(
-                          key: ValueKey('search'),
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                decoration: InputDecoration(
-                                  hintText: 'Cari Tips n Trik...',
-                                  prefixIcon: Icon(Icons.search),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  contentPadding: EdgeInsets.symmetric(
-                                      vertical: 0, horizontal: 12),
+        extendBody: true,
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: MediaQuery.of(context).padding.top + 1),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: AnimatedSwitcher(
+                duration: Duration(milliseconds: 250),
+                transitionBuilder: (child, animation) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: child,
+                  );
+                },
+                child: isSearching
+                    ? Row(
+                        key: ValueKey('search'),
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              decoration: InputDecoration(
+                                hintText: 'Cari Tips n Trik...',
+                                prefixIcon: Icon(Icons.search),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
+                                contentPadding: EdgeInsets.symmetric(
+                                    vertical: 0, horizontal: 12),
                               ),
                             ),
-                            SizedBox(width: 12),
-                            GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  isSearching = false;
-                                });
-                              },
-                              child: Icon(Icons.close,
-                                  size: 28, color: Colors.black54),
+                          ),
+                          SizedBox(width: 12),
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                isSearching = false;
+                              });
+                            },
+                            child: Icon(Icons.close,
+                                size: 28, color: Colors.black54),
+                          ),
+                        ],
+                      )
+                    : Row(
+                        key: ValueKey('normal'),
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Kesehatan",
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black87,
                             ),
-                          ],
-                        )
-                      : Row(
-                          key: ValueKey('normal'),
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "Perkembangan Si-bayi",
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            Row(
-                              children: [
-                                GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      isSearching = true;
-                                    });
-                                  },
-                                  child: Icon(Icons.search,
-                                      size: 28, color: Colors.black54),
-                                ),
-                                SizedBox(width: 16),
-                                Icon(Icons.bookmark_border,
+                          ),
+                          Row(
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    isSearching = true;
+                                  });
+                                },
+                                child: Icon(Icons.search,
                                     size: 28, color: Colors.black54),
-                              ],
-                            ),
-                          ],
-                        ),
-                ),
-              ),
-
-              Container(
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: Colors.grey.shade300, width: 1),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    // Tab bar
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: TabBar(
-                        indicatorWeight: 4,
-                        indicatorSize: TabBarIndicatorSize.label,
-                        indicatorColor: Color(0xFF10B2CF),
-                        labelColor: Color(0xFF10B2CF),
-                        unselectedLabelColor: Colors.grey,
-                        labelStyle: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        unselectedLabelStyle: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w400,
-                        ),
-                        tabs: [
-                          Tab(text: "Minggu Si-Bayi"),
-                          Tab(text: "Tips & Trik"),
+                              ),
+                              SizedBox(width: 16),
+                              Icon(Icons.bookmark_border,
+                                  size: 28, color: Colors.black54),
+                            ],
+                          ),
                         ],
                       ),
-                    ),
-                  ],
+              ),
+            ),
+
+            Container(
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: Colors.grey.shade300, width: 1),
                 ),
               ),
-              // Tab content
-              Expanded(
-                child: TabBarView(
-                  children: [
-                    // "Now, we are" tab content
-                    SingleChildScrollView(
-                      controller: widget.scrollController,
+              child: Column(
+                children: [
+                  // Tab bar
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: TabBar(
+                      indicatorWeight: 4,
+                      indicatorSize: TabBarIndicatorSize.label,
+                      indicatorColor: Color(0xFF10B2CF),
+                      labelColor: Color(0xFF10B2CF),
+                      unselectedLabelColor: Colors.grey,
+                      labelStyle: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      unselectedLabelStyle: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w400,
+                      ),
+                      tabs: [
+                        Tab(text: "Minggu Si-Bayi"),
+                        Tab(text: "Tips & Trik"),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Tab content
+            Expanded(
+              child: TabBarView(
+                children: [
+                  // "Now, we are" tab content
+                  SingleChildScrollView(
+                    controller: widget.scrollController,
+                    padding: EdgeInsets.only(bottom: 100),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(height: 10),
+                        Column(
+                          children: [
+                            Container(
+                              height: 40,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                padding: EdgeInsets.symmetric(horizontal: 8),
+                                itemCount: 40,
+                                itemBuilder: (context, index) {
+                                  final weekNum = index + 1;
+                                  final isSelected = weekNum == _selectedWeek;
+                                  return GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        _selectedWeek = weekNum;
+                                      });
+                                    },
+                                    child: Container(
+                                      width: 40,
+                                      margin:
+                                          EdgeInsets.symmetric(horizontal: 4),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          Text(
+                                            weekNum.toString(),
+                                            style: TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: isSelected
+                                                  ? FontWeight.w800
+                                                  : FontWeight.w600,
+                                              color: isSelected
+                                                  ? Color(0xFF10B2CF)
+                                                  : Colors.grey.shade600,
+                                            ),
+                                          ),
+                                          SizedBox(height: 6),
+                                          AnimatedContainer(
+                                            duration:
+                                                Duration(milliseconds: 200),
+                                            width: isSelected ? 16 : 0,
+                                            height: 2,
+                                            decoration: BoxDecoration(
+                                              color: isSelected
+                                                  ? Color(0xFF10B2CF)
+                                                  : Colors.transparent,
+                                              borderRadius:
+                                                  BorderRadius.circular(1),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            Container(
+                              height: 1,
+                              color: Colors.black.withOpacity(0.1),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 20),
+                        Center(
+                          child: _getBabyImage(),
+                        ),
+                        SizedBox(height: 30),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Bayi Di Minggu Ini",
+                                style: TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Text(
+                                    _weekData[_selectedWeek]?['size'] ??
+                                        "Unknown size",
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                  SizedBox(width: 5),
+                                  Text(
+                                    _weekData[_selectedWeek]?['emoji'] ?? "🍼",
+                                    style: TextStyle(fontSize: 22),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                _weekData[_selectedWeek]?['title'] ?? "",
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.blue,
+                                ),
+                              ),
+                              SizedBox(height: 16),
+                              Text(
+                                _weekData[_selectedWeek]?['description'] ?? "",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  color: Colors.black54,
+                                  height: 1.5,
+                                ),
+                              ),
+                              SizedBox(height: 20),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    padding: EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(16),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.grey.withOpacity(0.1),
+                                          spreadRadius: 1,
+                                          blurRadius: 5,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Data Appointment",
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        SizedBox(height: 12),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            _buildInfoBox(
+                                              title: "Tekanan Darah",
+                                              value: _weekData[_selectedWeek]
+                                                      ?['bp'] ??
+                                                  "-",
+                                              color: Colors.redAccent,
+                                            ),
+                                            _buildInfoBox(
+                                              title: "Berat Badan",
+                                              value: _weekData[_selectedWeek]
+                                                      ?['weight'] ??
+                                                  "-",
+                                              color: Colors.green,
+                                            ),
+                                            _buildInfoBox(
+                                              title: "Tinggi Badan",
+                                              value: _weekData[_selectedWeek]
+                                                      ?['height'] ??
+                                                  "-",
+                                              color: Colors.orange,
+                                            ),
+                                            _buildInfoBox(
+                                              title: "Detak Jantung",
+                                              value: _weekData[_selectedWeek]
+                                                      ?['heartRate'] ??
+                                                  "-",
+                                              color: Colors.purple,
+                                            ),
+                                          ],
+                                        ), // Add additional rows here if you have more data to display
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 30),
+                              Text(
+                                "Catatan Bidan",
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              Container(
+                                width: double.infinity,
+                                padding: EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border:
+                                      Border.all(color: Colors.grey.shade300),
+                                ),
+                                child: Text(
+                                  _weekData[_selectedWeek]?['notes'] ??
+                                      "Belum ada catatan.",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.black87,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 40),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // "Screenings and Symptoms" tab content
+                  SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          SizedBox(height: 2),
-                          Column(
-                            children: [
-                              Container(
-                                height: 53,
-                                child: ListView.builder(
-                                  scrollDirection: Axis.horizontal,
-                                  padding: EdgeInsets.symmetric(horizontal: 8),
-                                  itemCount: 40,
-                                  itemBuilder: (context, index) {
-                                    final weekNum = index + 1;
-                                    final isSelected = weekNum == _selectedWeek;
-                                    return GestureDetector(
-                                      onTap: () {
-                                        setState(() {
-                                          _selectedWeek = weekNum;
-                                        });
-                                      },
-                                      child: Container(
-                                        width: 40,
-                                        margin:
-                                            EdgeInsets.symmetric(horizontal: 4),
-                                        child: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.end,
-                                          children: [
-                                            Text(
-                                              weekNum.toString(),
-                                              style: TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: isSelected
-                                                    ? FontWeight.w800
-                                                    : FontWeight.w600,
-                                                color: isSelected
-                                                    ? Color(0xFF10B2CF)
-                                                    : Colors.grey.shade600,
-                                              ),
-                                            ),
-                                            SizedBox(height: 6),
-                                            AnimatedContainer(
-                                              duration:
-                                                  Duration(milliseconds: 200),
-                                              width: isSelected ? 16 : 0,
-                                              height: 2,
-                                              decoration: BoxDecoration(
-                                                color: isSelected
-                                                    ? Color(0xFF10B2CF)
-                                                    : Colors.transparent,
-                                                borderRadius:
-                                                    BorderRadius.circular(1),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                              Container(
-                                height: 1,
-                                color: Colors.black.withOpacity(0.1),
-                              ),
-                            ],
-                          ),
                           SizedBox(height: 20),
-                          Center(
-                            child: _getBabyImage(),
-                          ),
-                          SizedBox(height: 30),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Bayi Di Minggu Ini",
-                                  style: TextStyle(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                                SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    Text(
-                                      _weekData[_selectedWeek]?['size'] ??
-                                          "Unknown size",
-                                      style: TextStyle(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.black87,
-                                      ),
-                                    ),
-                                    SizedBox(width: 5),
-                                    Text(
-                                      _weekData[_selectedWeek]?['emoji'] ??
-                                          "🍼",
-                                      style: TextStyle(fontSize: 22),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 8),
-                                Text(
-                                  _weekData[_selectedWeek]?['title'] ?? "",
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.blue,
-                                  ),
-                                ),
-                                SizedBox(height: 16),
-                                Text(
-                                  _weekData[_selectedWeek]?['description'] ??
-                                      "",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w400,
-                                    color: Colors.black54,
-                                    height: 1.5,
-                                  ),
-                                ),
-                                SizedBox(height: 20),
-                                Text(
-                                  "Data Appointment",
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                                SizedBox(height: 12),
-                                // --- Tambahan kotak data ---
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    _buildInfoBox(
-                                      title: "Tekanan Darah",
-                                      value: _weekData[_selectedWeek]?['bp'] ??
-                                          "-",
-                                      color: Colors.redAccent,
-                                    ),
-                                    _buildInfoBox(
-                                      title: "Berat Badan",
-                                      value: _weekData[_selectedWeek]
-                                              ?['weight'] ??
-                                          "-",
-                                      color: Colors.green,
-                                    ),
-                                    _buildInfoBox(
-                                      title: "Tinggi Badan",
-                                      value: _weekData[_selectedWeek]
-                                              ?['height'] ??
-                                          "-",
-                                      color: Colors.orange,
-                                    ),
-                                    _buildInfoBox(
-                                      title: "Detak Jantung",
-                                      value: _weekData[_selectedWeek]
-                                              ?['heartRate'] ??
-                                          "-",
-                                      color: Colors.purple,
-                                    ),
-                                  ],
-                                ),
-
-                                SizedBox(height: 30),
-
-                                Text(
-                                  "Catatan Bidan",
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                                SizedBox(height: 8),
-                                Container(
-                                  width: double.infinity,
-                                  padding: EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade100,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border:
-                                        Border.all(color: Colors.grey.shade300),
-                                  ),
-                                  child: Text(
-                                    _weekData[_selectedWeek]?['notes'] ??
-                                        "Belum ada catatan.",
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.black87,
-                                      height: 1.4,
-                                    ),
-                                  ),
-                                ),
-
-                                SizedBox(height: 40),
-                              ],
+                          Text(
+                            "Recommended Screenings",
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
                             ),
                           ),
+                          SizedBox(height: 16),
+                          _buildScreeningItem(
+                            title: "Ultrasound Scan",
+                            description:
+                                "Regular ultrasound to check baby's development",
+                            isDue: _selectedWeek == 19 || _selectedWeek == 20,
+                          ),
+                          _buildScreeningItem(
+                            title: "Blood Test",
+                            description:
+                                "Monitor your health and screen for conditions",
+                            isDue: _selectedWeek >= 18 && _selectedWeek <= 22,
+                          ),
+                          SizedBox(height: 30),
+                          Text(
+                            "Common Symptoms",
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          SizedBox(height: 16),
+                          _buildSymptomItem(
+                            symptom: "Baby Movement",
+                            description:
+                                "You might start feeling baby's movements more clearly",
+                            isCommon: _selectedWeek >= 18,
+                          ),
+                          _buildSymptomItem(
+                            symptom: "Back Pain",
+                            description:
+                                "As your belly grows, back pain may increase",
+                            isCommon: _selectedWeek >= 16,
+                          ),
+                          _buildSymptomItem(
+                            symptom: "Heartburn",
+                            description:
+                                "Growing uterus puts pressure on your stomach",
+                            isCommon: _selectedWeek >= 17,
+                          ),
+                          SizedBox(height: 40),
                         ],
                       ),
                     ),
-
-                    // "Screenings and Symptoms" tab content
-                    SingleChildScrollView(
-                      child: Padding(
-                        padding: const EdgeInsets.all(20.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(height: 20),
-                            Text(
-                              "Recommended Screenings",
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            SizedBox(height: 16),
-                            _buildScreeningItem(
-                              title: "Ultrasound Scan",
-                              description:
-                                  "Regular ultrasound to check baby's development",
-                              isDue: _selectedWeek == 19 || _selectedWeek == 20,
-                            ),
-                            _buildScreeningItem(
-                              title: "Blood Test",
-                              description:
-                                  "Monitor your health and screen for conditions",
-                              isDue: _selectedWeek >= 18 && _selectedWeek <= 22,
-                            ),
-                            SizedBox(height: 30),
-                            Text(
-                              "Common Symptoms",
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            SizedBox(height: 16),
-                            _buildSymptomItem(
-                              symptom: "Baby Movement",
-                              description:
-                                  "You might start feeling baby's movements more clearly",
-                              isCommon: _selectedWeek >= 18,
-                            ),
-                            _buildSymptomItem(
-                              symptom: "Back Pain",
-                              description:
-                                  "As your belly grows, back pain may increase",
-                              isCommon: _selectedWeek >= 16,
-                            ),
-                            _buildSymptomItem(
-                              symptom: "Heartburn",
-                              description:
-                                  "Growing uterus puts pressure on your stomach",
-                              isCommon: _selectedWeek >= 17,
-                            ),
-                            SizedBox(height: 40),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
