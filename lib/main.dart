@@ -228,7 +228,7 @@ class _SplashSequenceState extends State<SplashSequence> with TickerProviderStat
               animation: _firstWaveAnimation,
               builder: (context, child) {
                 return ClipPath(
-                  clipper: WaveClipper(_firstWaveAnimation, direction: 'bottom-up'),
+                  clipper: WaveClipper(_firstWaveAnimation, direction: 'bottom-up', overshootPercentage: 0.2,),
                   child: Container(
                     color: customBlueColor,
                     width: MediaQuery.of(context).size.width,
@@ -312,18 +312,35 @@ class _SplashSequenceState extends State<SplashSequence> with TickerProviderStat
 class WaveClipper extends CustomClipper<Path> {
   final Animation<double> animation;
   final String direction;
+  final double overshootPercentage;
 
-  WaveClipper(this.animation, {required this.direction});
+  WaveClipper(this.animation, {
+    required this.direction,
+    this.overshootPercentage = 0.2, // Default overshoot 20%
+  });
 
   @override
   Path getClip(Size size) {
     var path = Path();
     final animationValue = animation.value;
-    final waveHeight = 70.0; // Lebih tinggi untuk gelombang yang lebih jelas
+    final waveHeight = 80.0; // Lebih tinggi untuk gelombang yang lebih jelas
     
+    // Hitung posisi dengan overshoot
+    double calculatePosition(double value) {
+      if (value < 0.5) {
+        // Naik melebihi target (overshoot)
+        return size.height * (1 - value * (1 + overshootPercentage));
+      } else {
+        // Kembali ke target (settle)
+        double overshootValue = 0.5 * (1 + overshootPercentage);
+        double settleProgress = (value - 0.5) / 0.5;
+        return size.height * (1 - overshootValue + (overshootValue - 1) * settleProgress);
+      }
+    }
+
     if (direction == 'up') {
       // Wave dari atas ke bawah
-      path.lineTo(0, size.height * (1 - animationValue));
+    path.lineTo(0, calculatePosition(animationValue));
       
       var firstControlPoint = Offset(size.width / 4, size.height * (1 - animationValue) - waveHeight);
       var firstEndPoint = Offset(size.width / 2, size.height * (1 - animationValue));
