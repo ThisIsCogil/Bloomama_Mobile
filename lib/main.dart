@@ -91,7 +91,7 @@ class _SplashSequenceState extends State<SplashSequence> with TickerProviderStat
 
     // Logo animation
     _logoController = AnimationController(
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     );
     _logoAnimation = Tween<double>(begin: 0, end: 1).animate(
