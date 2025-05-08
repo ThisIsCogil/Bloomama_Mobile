@@ -1,0 +1,446 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+class Event {
+  final String title;
+  final String description;
+  final TimeOfDay time;
+  final String company;
+  final Color color; // Tambahkan ini
+
+  Event({
+    required this.title,
+    required this.description,
+    required this.time,
+    required this.company,
+    required this.color, // Juga di sini
+  });
+}
+
+class CustomCalendarPage extends StatefulWidget {
+  @override
+  _CustomCalendarPageState createState() => _CustomCalendarPageState();
+}
+
+final List<Color> _eventColors = [
+  Colors.white,
+  Color(0xFFFFCDD2), // Red
+  Color(0xFFC8E6C9), // Green
+  Color(0xFFBBDEFB), // Blue
+  Color(0xFFFFF9C4), // Yellow
+  Color(0xFFD1C4E9), // Purple
+  Color(0xFFFFE0B2), // Orange
+  Color(0xFFB2EBF2), // Cyan
+];
+
+class _CustomCalendarPageState extends State<CustomCalendarPage> {
+  DateTime _selectedDate = DateTime.now();
+  DateTime _currentMonth =
+      DateTime(DateTime.now().year, DateTime.now().month, 1);
+  Map<DateTime, List<Event>> _events = {};
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  List<DateTime> _generateDaysInMonth(DateTime month) {
+    final firstDay = DateTime(month.year, month.month, 1);
+    final daysInMonth = DateUtils.getDaysInMonth(month.year, month.month);
+    return List.generate(
+        daysInMonth, (index) => firstDay.add(Duration(days: index)));
+  }
+
+  List<Event> _getEventsForDay(DateTime day) {
+    final key = DateTime(day.year, day.month, day.day);
+    return _events[key] ?? [];
+  }
+
+  void _changeMonth(int delta) {
+    setState(() {
+      _currentMonth =
+          DateTime(_currentMonth.year, _currentMonth.month + delta, 1);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final days = _generateDaysInMonth(_currentMonth);
+
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context), // Tombol Back
+        ),
+        toolbarHeight: 40, // Kurangi tinggi AppBar
+        titleSpacing: 0,
+      ),
+      backgroundColor: const Color(0xFFF2F4F7),
+      body: Column(
+        children: [
+          // Header bulan & timeline
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 10,
+                  offset: Offset(0, 4),
+                ),
+              ],
+            ),
+            padding: EdgeInsets.only(
+              bottom: 20,
+            ),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    mainAxisSize: MainAxisSize
+                        .min, // Agar row hanya mengambil lebar seperlunya
+                    mainAxisAlignment:
+                        MainAxisAlignment.center, // Pusatkan konten
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.chevron_left, size: 30),
+                        onPressed: () => _changeMonth(-1),
+                        padding: EdgeInsets
+                            .zero, // Hilangkan padding default IconButton
+                        constraints:
+                            BoxConstraints(), // Hilangkan constraints default
+                      ),
+                      SizedBox(
+                          width: 8), // Jarak antara ikon dan teks (sesuaikan)
+                      Text(
+                        DateFormat('MMMM yyyy').format(_currentMonth),
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF11B3CF),
+                        ),
+                      ),
+                      SizedBox(
+                          width: 8), // Jarak antara ikon dan teks (sesuaikan)
+                      IconButton(
+                        icon: Icon(Icons.chevron_right, size: 30),
+                        onPressed: () => _changeMonth(1),
+                        padding: EdgeInsets
+                            .zero, // Hilangkan padding default IconButton
+                        constraints:
+                            BoxConstraints(), // Hilangkan constraints default
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 16),
+                Container(
+                  height: 80,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: days.length,
+                    itemBuilder: (context, index) {
+                      final day = days[index];
+                      final isSelected = _selectedDate.year == day.year &&
+                          _selectedDate.month == day.month &&
+                          _selectedDate.day == day.day;
+                      final isToday = DateTime.now().year == day.year &&
+                          DateTime.now().month == day.month &&
+                          DateTime.now().day == day.day;
+                      final hasEvent = _getEventsForDay(day).isNotEmpty;
+
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedDate = day;
+                          });
+                        },
+                        child: Container(
+                          width: 50,
+                          height: 40,
+                          margin: EdgeInsets.symmetric(horizontal: 4),
+                          decoration: BoxDecoration(
+                            color:
+                                isSelected ? Color(0xFF11B3CF) : Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: isToday
+                                ? Border.all(color: Color(0xFF11B3CF), width: 2)
+                                : null,
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                DateFormat.E().format(day), // Mon, Tue...
+                                style: TextStyle(
+                                  color: isSelected
+                                      ? Colors.white
+                                      : Colors.black87,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                '${day.day}',
+                                style: TextStyle(
+                                  color: isSelected
+                                      ? Colors.white
+                                      : Colors.black87,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              // Indicator for events
+                              if (hasEvent)
+                                Container(
+                                  margin: EdgeInsets.only(top: 6),
+                                  width: 6,
+                                  height: 6,
+                                  decoration: BoxDecoration(
+                                    color: Color(0xFF11B3CF),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                )
+              ],
+            ),
+          ),
+
+          // Event list
+          Expanded(
+            child: _buildEventsList(),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Color(0xFF11B3CF),
+        child: Icon(Icons.add, color: Colors.white),
+        onPressed: () => _showAddEventDialog(context),
+      ),
+    );
+  }
+
+  Widget _buildEventsList() {
+    final events = _getEventsForDay(_selectedDate);
+
+    if (events.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.event_note, size: 60, color: Colors.grey.shade300),
+            SizedBox(height: 16),
+            Text(
+              'No events scheduled',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: EdgeInsets.all(16),
+      itemCount: events.length,
+      itemBuilder: (context, index) {
+        final event = events[index];
+        return Card(
+          color: event.color,
+          margin: EdgeInsets.only(bottom: 16),
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: ListTile(
+            contentPadding: EdgeInsets.all(16),
+            leading: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: event.color,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Center(
+                child: Text(
+                  event.time.format(context),
+                  style: TextStyle(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+            title: Text(
+              event.title,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: 4),
+                Text(
+                  event.company,
+                  style: TextStyle(color: Colors.grey.shade600),
+                ),
+                if (event.description.isNotEmpty)
+                  Padding(
+                    padding: EdgeInsets.only(top: 4),
+                    child: Text(
+                      event.description,
+                      style: TextStyle(color: Colors.grey.shade600),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showAddEventDialog(BuildContext context) {
+    final titleController = TextEditingController();
+    final companyController = TextEditingController();
+    final descController = TextEditingController();
+    TimeOfDay eventTime = TimeOfDay.now();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Add Event', style: TextStyle(color: Color(0xFF11B3CF))),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: InputDecoration(
+                    labelText: 'Event Title',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                SizedBox(height: 16),
+                TextField(
+                  controller: companyController,
+                  decoration: InputDecoration(
+                    labelText: 'Company',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                SizedBox(height: 16),
+                TextField(
+                  controller: descController,
+                  decoration: InputDecoration(
+                    labelText: 'Description (Optional)',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 2,
+                ),
+                SizedBox(height: 16),
+                Row(
+                  children: [
+                    Text('Time:', style: TextStyle(fontSize: 16)),
+                    Spacer(),
+                    TextButton(
+                      onPressed: () async {
+                        final pickedTime = await showTimePicker(
+                          context: context,
+                          initialTime: eventTime,
+                          builder: (context, child) {
+                            return Theme(
+                              data: ThemeData.light().copyWith(
+                                colorScheme: ColorScheme.light(
+                                  primary: Color(0xFF11B3CF),
+                                  onPrimary: Colors.white,
+                                  surface: Colors.white,
+                                  onSurface: Colors.black,
+                                ),
+                              ),
+                              child: child!,
+                            );
+                          },
+                        );
+                        if (pickedTime != null) {
+                          setState(() {
+                            eventTime = pickedTime;
+                          });
+                        }
+                      },
+                      child: Container(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Color(0xFFE3F2FD),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          eventTime.format(context),
+                          style: TextStyle(color: Color(0xFF11B3CF)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF11B3CF),
+              ),
+              onPressed: () {
+                if (titleController.text.isNotEmpty) {
+                  final newEvent = Event(
+                    title: titleController.text,
+                    description: descController.text,
+                    time: eventTime,
+                    company: companyController.text,
+                    color: _eventColors[DateTime.now().millisecondsSinceEpoch %
+                        _eventColors.length], // warna acak
+                  );
+
+                  setState(() {
+                    final day = DateTime(
+                      _selectedDate.year,
+                      _selectedDate.month,
+                      _selectedDate.day,
+                    );
+                    _events[day] = [..._events[day] ?? [], newEvent];
+                  });
+
+                  Navigator.pop(context);
+                }
+              },
+              child: Text('Save', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}

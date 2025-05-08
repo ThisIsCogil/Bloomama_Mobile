@@ -30,10 +30,21 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  fl_chart: ^0.66.0
 
-  flutter_native_splash: ^2.4.4
-  floating_bottom_navigation_bar: ^1.5.2
+  # Existing packages
+  
+  fl_chart: ^0.70.2
+  easy_date_timeline: ^2.0.9
+  google_fonts: ^5.1.0 
+  intl: ^0.19.0  
+  table_calendar: ^3.0.9
+  
+  
+  # Animation packages for splash screen
+  flutter_spinkit: ^5.2.0    # Various loading animations
+  animated_text_kit: ^4.2.2  # Text animations
+  lottie: ^2.6.0            # Lottie animations
+  flutter_animate: ^4.5.0    # Animation utilities
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -63,7 +74,57 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-  - assets/pngwing.com (1).png
+    - assets/5.png
+    - assets/13.png
+    - assets/16.png
+    - assets/logo.png
+    - assets/14.png 
+    - assets/lottie/1.json
+    - assets/lottie/2.json
+    - assets/lottie/3.json
+    - assets/lottie/loading.json
+    - assets/lottie/login.json
+    - assets/baby/minggu1.png
+    - assets/baby/minggu2.png
+    - assets/baby/minggu3.png
+    - assets/baby/minggu4.png
+    - assets/baby/minggu5.png
+    - assets/baby/minggu6.png
+    - assets/baby/minggu7.png
+    - assets/baby/minggu8.png
+    - assets/baby/minggu9.png
+    - assets/baby/minggu10.png
+    - assets/baby/minggu11.png
+    - assets/baby/minggu12.png
+    - assets/baby/minggu13.png
+    - assets/baby/minggu14.png
+    - assets/baby/minggu15.png
+    - assets/baby/minggu16.png
+    - assets/baby/minggu17.png
+    - assets/baby/minggu18.png
+    - assets/baby/minggu19.png
+    - assets/baby/minggu20.png
+    - assets/baby/minggu21.png
+    - assets/baby/minggu22.png
+    - assets/baby/minggu23.png
+    - assets/baby/minggu24.png
+    - assets/baby/minggu25.png
+    - assets/baby/minggu26.png
+    - assets/baby/minggu27.png
+    - assets/baby/minggu28.png
+    - assets/baby/minggu29.png
+    - assets/baby/minggu30.png
+    - assets/baby/minggu31.png
+    - assets/baby/minggu32.png
+    - assets/baby/minggu33.png
+    - assets/baby/minggu34.png
+    - assets/baby/minggu35.png
+    - assets/baby/minggu36.png
+    - assets/baby/minggu37.png
+    - assets/baby/minggu38.png
+    - assets/baby/minggu39.png
+    - assets/baby/minggu40.png
+
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
