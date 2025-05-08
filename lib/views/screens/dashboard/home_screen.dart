@@ -31,7 +31,7 @@ class MidwifeVisit {
 class _HomeScreenState extends State<HomeScreen> {
   // Set initial state to show user doesn't have pregnancy data
   bool hasPregnancyData = false;
-  
+
   // Pregnancy data fields
   String userName = "Adam";
   DateTime? dueDate;
@@ -39,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int pregnancyDays = 0;
   String trimester = "First trimester";
   int totalPregnancyDays = 0;
-  
+
   // User pregnancy history
   int pregnancyCount = 0;
   int childrenCount = 0;
@@ -69,7 +69,9 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SizedBox(height: MediaQuery.of(context).padding.top), // Status bar height
+            SizedBox(
+                height:
+                    MediaQuery.of(context).padding.top), // Status bar height
             _buildHeader(),
             _buildPregnancyCard(),
             _buildHealthData(),
@@ -152,101 +154,102 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-Widget _buildPregnancyCard() {
-  return Container(
-    margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-    decoration: BoxDecoration(
-      gradient: const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [Color(0xFF1565C0), Color(0xFF0D47A1)],
-      ),
-      borderRadius: BorderRadius.circular(20),
-      boxShadow: [
-        BoxShadow(
-          color: const Color(0xFF1E88E5).withOpacity(0.2),
-          blurRadius: 10,
-          offset: const Offset(0, 4),
+  Widget _buildPregnancyCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1565C0), Color(0xFF0D47A1)],
         ),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                "Good afternoon,",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white,
-                ),
-              ),
-              const Text(
-                "Adam",
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFFBBDEFB),
-                ),
-              ),
-            ],
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1E88E5).withOpacity(0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-        ),
-        SizedBox(
-          height: 180,
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: CustomPaint(
-                    painter: CirclePatternPainter(color: const Color(0xFF1E88E5).withOpacity(0.2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Good afternoon,",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
                   ),
                 ),
-              ),
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 100,
-                child: Center(
-                  child: Icon(
-                    Icons.child_friendly,
-                    size: 120,
-                    color: const Color(0xFF42A5F5),
+                const Text(
+                  "Adam",
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFBBDEFB),
                   ),
                 ),
-              ),
-              if (hasPregnancyData)
-                Positioned(
-                  left: 10,
-                  bottom: 10,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    
-                    child: Text(
-                      "Day ${totalPregnancyDays}",
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+              ],
+            ),
+          ),
+          SizedBox(
+            height: 180,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: CustomPaint(
+                      painter: CirclePatternPainter(
+                          color: const Color(0xFF1E88E5).withOpacity(0.2)),
                     ),
                   ),
                 ),
-            ],
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 100,
+                  child: Center(
+                    child: Icon(
+                      Icons.child_friendly,
+                      size: 120,
+                      color: const Color(0xFF42A5F5),
+                    ),
+                  ),
+                ),
+                if (hasPregnancyData)
+                  Positioned(
+                    left: 10,
+                    bottom: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      child: Text(
+                        "Day ${totalPregnancyDays}",
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
-        ),
-      ],
-    ),
-  );
-}
-  
+        ],
+      ),
+    );
+  }
+
   Widget _buildPregnancyInfo() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -272,7 +275,8 @@ Widget _buildPregnancyCard() {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: const Color(0xFFE0F7FA),
                     borderRadius: BorderRadius.circular(12),
@@ -329,7 +333,9 @@ Widget _buildPregnancyCard() {
                     ),
                     const SizedBox(width: 10),
                     Text(
-                      dueDate != null ? "Due ${DateFormat('dd MMM').format(dueDate!)}" : "",
+                      dueDate != null
+                          ? "Due ${DateFormat('dd MMM').format(dueDate!)}"
+                          : "",
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w500,
@@ -392,15 +398,20 @@ Widget _buildPregnancyCard() {
                         ClipRRect(
                           borderRadius: BorderRadius.circular(12),
                           child: LinearProgressIndicator(
-                            value: totalPregnancyDays / 280, // Approximate total days in pregnancy
+                            value: totalPregnancyDays /
+                                280, // Approximate total days in pregnancy
                             minHeight: 16,
                             backgroundColor: const Color(0xFFB2EBF2),
-                            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF00ACC1)),
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                                Color(0xFF00ACC1)),
                           ),
                         ),
                         // Add tiny baby icon at the progress position
                         Positioned(
-                          left: (totalPregnancyDays / 280) * MediaQuery.of(context).size.width * 0.85 - 10,
+                          left: (totalPregnancyDays / 280) *
+                                  MediaQuery.of(context).size.width *
+                                  0.85 -
+                              10,
                           top: 0,
                           child: const Icon(
                             Icons.child_care,
@@ -459,14 +470,15 @@ Widget _buildPregnancyCard() {
                           onRegistrationComplete: (pregnancyData) {
                             setState(() {
                               hasPregnancyData = true;
-                              
+
                               // Update user data
                               userName = pregnancyData.fullName;
                               pregnancyCount = pregnancyData.pregnancyCount;
                               childrenCount = pregnancyData.childrenCount;
                               abortionCount = pregnancyData.abortionCount;
-                              firstDayOfPregnancy = pregnancyData.firstDayOfPregnancy;
-                              
+                              firstDayOfPregnancy =
+                                  pregnancyData.firstDayOfPregnancy;
+
                               // Update pregnancy progress data
                               dueDate = pregnancyData.dueDate;
                               pregnancyWeeks = pregnancyData.currentWeeks;
@@ -872,20 +884,10 @@ Widget _buildPregnancyCard() {
   }
 
   Widget _buildArticlesSection() {
-    // Mock articles data
     final List<Map<String, String>> articles = [
-      {
-        'title': 'Healthy eating during pregnancy',
-        'thumbnail': 'assets/pregnancy_food.jpg',
-      },
-      {
-        'title': 'Pregnancy exercise basics',
-        'thumbnail': 'assets/pregnancy_exercise.jpg',
-      },
-      {
-        'title': 'Understanding fetal development',
-        'thumbnail': 'assets/fetal_development.jpg',
-      },
+      {'title': 'Healthy eating during pregnancy'},
+      {'title': 'Pregnancy exercise basics'},
+      {'title': 'Understanding fetal development'},
     ];
 
     return Container(
@@ -905,7 +907,7 @@ Widget _buildPregnancyCard() {
           ),
           const SizedBox(height: 12),
           SizedBox(
-            height: 180,
+            height: 200,
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               scrollDirection: Axis.horizontal,
@@ -913,7 +915,6 @@ Widget _buildPregnancyCard() {
               itemBuilder: (context, index) {
                 return _buildArticleCard(
                   title: articles[index]['title']!,
-                  thumbnail: articles[index]['thumbnail']!,
                 );
               },
             ),
@@ -923,95 +924,71 @@ Widget _buildPregnancyCard() {
     );
   }
 
-  Widget _buildArticleCard({required String title, required String thumbnail}) {
+  Widget _buildArticleCard({required String title}) {
     return Container(
       width: 220,
       margin: const EdgeInsets.symmetric(horizontal: 4),
       child: Card(
+        color: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
         elevation: 2,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
-              ),
-              child: Stack(
-                children: [
-                  Image.asset(
-                    thumbnail,
-                    height: 120,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
-                  Positioned(
-                    bottom: 8,
-                    right: 8,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: const Icon(
-                        Icons.play_arrow,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                height: 120,
+                width: double.infinity,
+                color: Colors.blue,
+                child: const Center(
+                  child: Icon(Icons.image, color: Colors.white, size: 40),
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                  ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
-
 }
 
 class CirclePatternPainter extends CustomPainter {
-    final Color color;
-    
-    CirclePatternPainter({required this.color});
-    
-    @override
-    void paint(Canvas canvas, Size size) {
-      final paint = Paint()
-        ..color = color
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5;
-        
-      canvas.drawCircle(
-        Offset(size.width * 0.8, size.height * 0.3),
-        size.width * 0.15,
-        paint
-      );
-      
-      canvas.drawCircle(
-        Offset(size.width * 0.2, size.height * 0.7),
-        size.width * 0.1,
-        paint
-      );
-    }
-    
-    @override
-    bool shouldRepaint(CustomPainter oldDelegate) => false;
+  final Color color;
+
+  CirclePatternPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    canvas.drawCircle(
+        Offset(size.width * 0.8, size.height * 0.3), size.width * 0.15, paint);
+
+    canvas.drawCircle(
+        Offset(size.width * 0.2, size.height * 0.7), size.width * 0.1, paint);
   }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
+}
