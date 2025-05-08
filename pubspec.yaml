@@ -84,6 +84,47 @@ flutter:
     - assets/lottie/3.json
     - assets/lottie/loading.json
     - assets/lottie/login.json
+    - assets/baby/minggu1.png
+    - assets/baby/minggu2.png
+    - assets/baby/minggu3.png
+    - assets/baby/minggu4.png
+    - assets/baby/minggu5.png
+    - assets/baby/minggu6.png
+    - assets/baby/minggu7.png
+    - assets/baby/minggu8.png
+    - assets/baby/minggu9.png
+    - assets/baby/minggu10.png
+    - assets/baby/minggu11.png
+    - assets/baby/minggu12.png
+    - assets/baby/minggu13.png
+    - assets/baby/minggu14.png
+    - assets/baby/minggu15.png
+    - assets/baby/minggu16.png
+    - assets/baby/minggu17.png
+    - assets/baby/minggu18.png
+    - assets/baby/minggu19.png
+    - assets/baby/minggu20.png
+    - assets/baby/minggu21.png
+    - assets/baby/minggu22.png
+    - assets/baby/minggu23.png
+    - assets/baby/minggu24.png
+    - assets/baby/minggu25.png
+    - assets/baby/minggu26.png
+    - assets/baby/minggu27.png
+    - assets/baby/minggu28.png
+    - assets/baby/minggu29.png
+    - assets/baby/minggu30.png
+    - assets/baby/minggu31.png
+    - assets/baby/minggu32.png
+    - assets/baby/minggu33.png
+    - assets/baby/minggu34.png
+    - assets/baby/minggu35.png
+    - assets/baby/minggu36.png
+    - assets/baby/minggu37.png
+    - assets/baby/minggu38.png
+    - assets/baby/minggu39.png
+    - assets/baby/minggu40.png
+
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

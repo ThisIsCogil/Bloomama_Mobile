@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 
 class PasswordTextField extends StatefulWidget {
   final TextEditingController controller;
-  final String label;
+  final String labelText;
+  final Color? primaryColor;
   final bool showStrengthMeter;
-  final String? helperText;
 
   const PasswordTextField({
-    super.key,
+    Key? key,
     required this.controller,
-    this.label = 'Password',
+    this.labelText = 'Password',
+    this.primaryColor,
     this.showStrengthMeter = false,
-    this.helperText,
-  });
+  }) : super(key: key);
 
   @override
   _PasswordTextFieldState createState() => _PasswordTextFieldState();
@@ -20,80 +20,141 @@ class PasswordTextField extends StatefulWidget {
 
 class _PasswordTextFieldState extends State<PasswordTextField> {
   bool _obscureText = true;
-  double _strength = 0;
+  String _password = '';
+  int _passwordStrength = 0;
 
-  void _checkPasswordStrength(String password) {
-    if (!widget.showStrengthMeter) return;
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_updatePasswordStrength);
+  }
 
-    double strength = 0;
-    if (password.isEmpty) {
-      strength = 0;
-    } else if (password.length < 6) {
-      strength = 0.25;
-    } else if (password.length < 8) {
-      strength = 0.5;
-    } else {
-      strength = 1.0;
-    }
+  @override
+  void dispose() {
+    widget.controller.removeListener(_updatePasswordStrength);
+    super.dispose();
+  }
 
+  void _updatePasswordStrength() {
     setState(() {
-      _strength = strength;
+      _password = widget.controller.text;
+      _passwordStrength = _calculatePasswordStrength(_password);
     });
+  }
+
+  int _calculatePasswordStrength(String password) {
+    // Simple password strength calculation
+    if (password.isEmpty) return 0;
+    
+    int strength = 0;
+    
+    // Length check
+    if (password.length >= 8) strength++;
+    
+    // Contains uppercase
+    if (password.contains(RegExp(r'[A-Z]'))) strength++;
+    
+    // Contains lowercase
+    if (password.contains(RegExp(r'[a-z]'))) strength++;
+    
+    // Contains numbers
+    if (password.contains(RegExp(r'[0-9]'))) strength++;
+    
+    // Contains special characters
+    if (password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) strength++;
+    
+    return strength;
+  }
+
+  String _getPasswordStrengthText() {
+    if (_password.isEmpty) return 'Enter password';
+    if (_passwordStrength <= 2) return 'Weak';
+    if (_passwordStrength <= 4) return 'Medium';
+    return 'Strong';
+  }
+
+  Color _getPasswordStrengthColor() {
+    if (_password.isEmpty) return Colors.grey;
+    if (_passwordStrength <= 2) return Colors.red;
+    if (_passwordStrength <= 4) return Colors.orange;
+    return Colors.green;
   }
 
   @override
   Widget build(BuildContext context) {
+    final Color activeColor = widget.primaryColor ?? const Color(0xFF2196F3);
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: double.infinity,
-          child: TextFormField(
-            controller: widget.controller,
-            obscureText: _obscureText,
-            onChanged: _checkPasswordStrength,
-            decoration: InputDecoration(
-              labelText: widget.label,
-              helperText: widget.helperText,
-              labelStyle: const TextStyle(color: Colors.grey),
-              floatingLabelStyle: const TextStyle(color: Color(0xFF11B3CF)),
-              border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12)),
-              prefixIcon:
-                  const Icon(Icons.lock, color: Color(0xFF11B3CF)),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide:
-                    const BorderSide(color: Color(0xFF11B3CF), width: 2.0),
+        TextFormField(
+          controller: widget.controller,
+          obscureText: _obscureText,
+          onChanged: (value) {
+            setState(() {
+              _password = value;
+              _passwordStrength = _calculatePasswordStrength(value);
+            });
+          },
+          decoration: InputDecoration(
+            labelText: widget.labelText,
+            labelStyle: TextStyle(color: Colors.grey.shade600),
+            floatingLabelStyle: TextStyle(color: activeColor),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: activeColor, width: 2.0),
+            ),
+            fillColor: Colors.grey.shade100,
+            filled: true,
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscureText ? Icons.visibility_off : Icons.visibility,
+                color: Colors.grey.shade600,
               ),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _obscureText
-                      ? Icons.visibility_off
-                      : Icons.visibility,
-                  color: Colors.grey,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _obscureText = !_obscureText;
-                  });
-                },
-              ),
+              onPressed: () {
+                setState(() {
+                  _obscureText = !_obscureText;
+                });
+              },
             ),
           ),
         ),
-        if (widget.showStrengthMeter)
+        if (widget.showStrengthMeter && _password.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 8.0),
-            child: LinearProgressIndicator(
-              value: _strength,
-              backgroundColor: Colors.grey[300],
-              color: _strength <= 0.25
-                  ? Colors.red
-                  : _strength <= 0.5
-                      ? Colors.orange
-                      : Colors.green,
-              minHeight: 5,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      _getPasswordStrengthText(),
+                      style: TextStyle(
+                        color: _getPasswordStrengthColor(),
+                        fontSize: 12,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '${_passwordStrength}/5',
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                LinearProgressIndicator(
+                  value: _passwordStrength / 5,
+                  backgroundColor: Colors.grey.shade300,
+                  valueColor: AlwaysStoppedAnimation<Color>(_getPasswordStrengthColor()),
+                ),
+              ],
             ),
           ),
       ],

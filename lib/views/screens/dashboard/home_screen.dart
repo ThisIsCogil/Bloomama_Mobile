@@ -668,13 +668,12 @@ class _HomeScreenState extends State<HomeScreen> {
             child: _buildLineChart(visits),
           ),
           const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 16,
             children: [
               _buildChartLegend(Colors.pink[300]!, "Blood Pressure"),
-              const SizedBox(width: 16),
               _buildChartLegend(Colors.blue[400]!, "Weight"),
-              const SizedBox(width: 16),
               _buildChartLegend(Colors.green[400]!, "Fetal Heart Rate"),
             ],
           ),
