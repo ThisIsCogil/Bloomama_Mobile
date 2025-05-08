@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:login/views/screens/kesehatan/pregnancy_tracker_screen.dart';
 import 'screens/dashboard/home_screen.dart';
-import 'screens/kesehatan/kesehatan_screen.dart';
 import 'screens/mentor/mentor_screen.dart';
 import 'screens/Profile/profile_screen.dart';
 
@@ -70,7 +70,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     final List<Widget> _pages = [
       HomeScreen(scrollController: _scrollController),
-      KesehatanScreen(scrollController: _scrollController),
+      PregnancyTrackerScreen(scrollController: _scrollController),
       MentorScreen(scrollController: _scrollController),
       ProfileScreen(scrollController: _scrollController),
     ];
