@@ -175,31 +175,35 @@ class _LoginScreenState extends State<LoginScreen>
                         fit: BoxFit.contain),
                   ),
                   const Spacer(flex: 1),
-                  ElevatedButton(
-                    onPressed: _showLoginForm,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: primaryColor,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 40, vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                        side: BorderSide.none, // Tidak ada border
-                      ),
-                      elevation: 0, // Jika tidak ingin ada bayangan
-                    ),
-                    child: Row(
-                      mainAxisSize:
-                          MainAxisSize.min, // Sesuaikan ukuran dengan konten
-                      children: [
-                        const Text(
-                          'Let\'s Start',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w600),
+                  SizedBox(
+                    width: double.infinity, // Full width dari kiri ke kanan
+                    child: ElevatedButton(
+                      onPressed: _showLoginForm,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(
+                            0xFF11B3CF), // Background button warna biru
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 40, vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(30), // Rounded border
                         ),
-                        const SizedBox(width: 8), // Jarak antara teks dan ikon
-                        Icon(Icons.arrow_forward, color: primaryColor),
-                      ],
+                        elevation: 0, // Tidak ada bayangan
+                      ),
+                      child: Row(
+                        mainAxisAlignment:
+                            MainAxisAlignment.center, // Teks dan ikon di tengah
+                        children: [
+                          const Text(
+                            'Let\'s Start',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white, // Teks warna putih
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 40),

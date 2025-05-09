@@ -66,6 +66,7 @@
         extendBody: true,
         body: SingleChildScrollView(
           controller: widget.scrollController,
+          physics: BouncingScrollPhysics(),
           padding: const EdgeInsets.only(bottom: 80), // Add padding for navbar
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -394,33 +395,19 @@
                     ],
                   ),
                   const SizedBox(height: 8),
-                  Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: LinearProgressIndicator(
-                          value: totalPregnancyDays /
-                              280, // Approximate total days in pregnancy
-                          minHeight: 16,
-                          backgroundColor: const Color(0xFFB2EBF2),
-                          valueColor: const AlwaysStoppedAnimation<Color>(
-                              Color(0xFF00ACC1)),
-                        ),
-                      ),
-                      Positioned(
-                        left: (totalPregnancyDays / 280) *
-                                MediaQuery.of(context).size.width *
-                                0.85 -
-                            10,
-                        top: 0,
-                        child: const Icon(
-                          Icons.child_care,
-                          size: 16,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
+                 Stack(
+  children: [
+    ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: LinearProgressIndicator(
+        value: totalPregnancyDays / 280, // Approximate total days in pregnancy
+        minHeight: 16,
+        backgroundColor: const Color(0xFFB2EBF2),
+        valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF00ACC1)),
+      ),
+    ),
+  ],
+)
                 ],
               ),
             ],
@@ -505,146 +492,152 @@
 }
 
   Widget _buildHealthStats() {
-    return Column(
-      children: [
-        _buildPregnancyInfo(),
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                "Health Data",
-                style: TextStyle(
-                  fontSize: 16, // Smaller title as requested
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
+  return Column(
+    children: [
+      _buildPregnancyInfo(),
+      Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              "Health Data",
+              style: TextStyle(
+                fontSize: 16, 
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
               ),
-              const SizedBox(height: 8),
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                childAspectRatio: 1.5,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                children: [
-                  _buildColoredStatItem(
-                    title: "Tekanan Darah",
-                    value: "120/80",
-                    unit: "mmHg",
-                    icon: Icons.monitor_heart_outlined,
-                    color: Colors.blue[400]!,
-                  ),
-                  _buildColoredStatItem(
-                    title: "Detak Jantung",
-                    value: "89",
-                    unit: "BPM",
-                    icon: Icons.favorite_outline,
-                    color: Colors.red[400]!,
-                  ),
-                  _buildColoredStatItem(
-                    title: "Berat Badan",
-                    value: "70.5",
-                    unit: "Kg",
-                    icon: Icons.scale_outlined,
-                    color: Colors.orange[400]!,
-                  ),
-                  _buildColoredStatItem(
-                    title: "Tinggi Badan",
-                    value: "165.6",
-                    unit: "Cm",
-                    icon: Icons.straighten_outlined,
-                    color: Colors.lightBlue[400]!,
-                  ),
-                ],
-              ),
-            ],
-          ),
+            ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: 2,
+                  childAspectRatio: (constraints.maxWidth / 2) / 120, // Dinamis
+                  mainAxisSpacing: 8,
+                  crossAxisSpacing: 8, // Dikurangi untuk mencegah overflow
+                  children: [
+                    _buildColoredStatItem(
+                      title: "Tekanan Darah",
+                      value: "120/80",
+                      unit: "mmHg",
+                      icon: Icons.monitor_heart_outlined,
+                      color: Colors.blue[400]!,
+                    ),
+                    _buildColoredStatItem(
+                      title: "Detak Jantung",
+                      value: "89",
+                      unit: "BPM",
+                      icon: Icons.favorite_outline,
+                      color: Colors.red[400]!,
+                    ),
+                    _buildColoredStatItem(
+                      title: "Berat Badan",
+                      value: "70.5",
+                      unit: "Kg",
+                      icon: Icons.scale_outlined,
+                      color: Colors.orange[400]!,
+                    ),
+                    _buildColoredStatItem(
+                      title: "Tinggi Badan",
+                      value: "165.6",
+                      unit: "Cm",
+                      icon: Icons.straighten_outlined,
+                      color: Colors.lightBlue[400]!,
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
         ),
-        _buildMidwifeVisitsChart(),
-      ],
-    );
-  }
-
-  Widget _buildColoredStatItem({
-    required String title,
-    required String value,
-    required String unit,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        // Removed border and added box shadow for 3D effect
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.3),
-            offset: const Offset(0, 3),
-            blurRadius: 6,
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.white,
-            offset: const Offset(-2, -2),
-            blurRadius: 4,
-            spreadRadius: 0,
-          ),
-        ],
       ),
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.3),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, size: 18, color: color),
+      _buildMidwifeVisitsChart(),
+    ],
+  );
+}
+
+Widget _buildColoredStatItem({
+  required String title,
+  required String value,
+  required String unit,
+  required IconData icon,
+  required Color color,
+}) {
+  return Container(
+    decoration: BoxDecoration(
+      color: color.withOpacity(0.1),
+      borderRadius: BorderRadius.circular(12),
+      boxShadow: [
+        BoxShadow(
+          color: color.withOpacity(0.3),
+          offset: const Offset(0, 3),
+          blurRadius: 6,
+          spreadRadius: 0,
+        ),
+        BoxShadow(
+          color: Colors.white,
+          offset: const Offset(-2, -2),
+          blurRadius: 4,
+          spreadRadius: 0,
+        ),
+      ],
+    ),
+    padding: const EdgeInsets.all(12),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.3),
+                shape: BoxShape.circle,
               ),
-              const SizedBox(width: 8),
-              Text(
+              child: Icon(icon, size: 18, color: color),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
                 title,
                 style: TextStyle(
-                  fontSize: 13, // Smaller title for the card
+                  fontSize: 13, 
                   fontWeight: FontWeight.w500,
                   color: color,
                 ),
+                overflow: TextOverflow.ellipsis,
               ),
-            ],
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
+            ),
+          ],
+        ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
               ),
-              Text(
-                unit,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[700],
-                ),
+            ),
+            Text(
+              unit,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[700],
               ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
   
 
     Widget _buildMidwifeVisitsChart() {
