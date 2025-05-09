@@ -38,6 +38,7 @@ dependencies:
   google_fonts: ^5.1.0 
   intl: ^0.19.0  
   table_calendar: ^3.0.9
+  model_viewer_plus: ^1.4.0
   
   
   # Animation packages for splash screen
@@ -84,6 +85,7 @@ flutter:
     - assets/lottie/3.json
     - assets/lottie/loading.json
     - assets/lottie/login.json
+    - assets/lottie/family.json
     - assets/baby/minggu1.png
     - assets/baby/minggu2.png
     - assets/baby/minggu3.png
@@ -124,6 +126,7 @@ flutter:
     - assets/baby/minggu38.png
     - assets/baby/minggu39.png
     - assets/baby/minggu40.png
+    - assets/models/baby.glb
 
   #   - images/a_dot_ham.jpeg
 
