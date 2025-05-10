@@ -126,7 +126,7 @@ class _BabyModelViewerState extends State<BabyModelViewer>
     bool hasPregnancyData = false;
 
     // Pregnancy data fields
-    String userName = "Adam";
+    String userName = "Hariadi";
     DateTime? dueDate;
     int pregnancyWeeks = 0;
     int pregnancyDays = 0;
