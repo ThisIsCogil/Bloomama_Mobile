@@ -4,6 +4,10 @@
   import 'calender.dart';
   import 'registration_screen.dart';
   import 'package:lottie/lottie.dart';
+  import 'package:model_viewer_plus/model_viewer_plus.dart';
+  import 'dart:ui' as ui;
+  
+
 
   class HomeScreen extends StatefulWidget {
     final ScrollController scrollController;
@@ -14,6 +18,94 @@
     @override
     State<HomeScreen> createState() => _HomeScreenState();
   }
+
+  class BabyModelViewer extends StatefulWidget {
+  const BabyModelViewer({Key? key}) : super(key: key);
+
+  @override
+  State<BabyModelViewer> createState() => _BabyModelViewerState();
+}
+
+class _BabyModelViewerState extends State<BabyModelViewer> 
+    with AutomaticKeepAliveClientMixin {
+  bool _isLoading = true;
+  bool _errorLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadModel();
+  }
+
+  Future<void> _loadModel() async {
+    try {
+      // Simulate loading delay
+      await Future.delayed(const Duration(seconds: 2));
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorLoading = true;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    
+    return Container(
+      width: double.infinity,
+      height: 250,
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: _errorLoading
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Failed to load 3D model',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ],
+              ),
+            )
+          : _isLoading
+              ? Center(
+                  child: Lottie.asset(
+                    'assets/lottie/loading.json',
+                    width: 100,
+                    height: 100,
+                  ),
+                )
+              : ModelViewer(
+                  src: 'assets/models/baby3.glb',
+                  alt: "3D Model Janin",
+                  autoRotate: true,
+                  cameraControls: true,
+                  autoPlay: true,
+                  ar: false,
+                  shadowIntensity: 1.0,
+                  exposure: 0.5,
+                  backgroundColor: Colors.transparent,
+                ),
+    );
+  }
+
+  @override
+  bool get wantKeepAlive => true;
+}
 
   // Model for midwife visit data
   class MidwifeVisit {
@@ -56,6 +148,7 @@
     @override
     void initState() {
       super.initState();
+     
       // Due date will be calculated after registration
     }
 
@@ -155,101 +248,99 @@
       );
     }
 
-    Widget _buildPregnancyCard() {
-      return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF1565C0), Color(0xFF0D47A1)],
+  Widget _buildPregnancyCard() {
+  return Container(
+    margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+    decoration: BoxDecoration(
+      gradient: const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFFF2F4F7), Color(0xFFF2F4F7)],
+      ),
+      borderRadius: BorderRadius.circular(20),
+      boxShadow: [
+        BoxShadow(
+          color: const Color(0xFF1E88E5).withOpacity(0.2),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Header section
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Good afternoon,",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFFB3EAF4),
+                ),
+              ),
+              const Text(
+                "Adam",
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF11B3CF),
+                ),
+              ),
+            ],
           ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF1E88E5).withOpacity(0.2),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Good afternoon,",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white,
+        
+        // 3D Model section with the new widget
+        ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: 250,
+            maxHeight: 250,
+          ),
+          child: Stack(
+            children: [
+              // Using the new widget here
+              const BabyModelViewer(),
+              
+              // Day counter overlay
+              if (hasPregnancyData)
+                Positioned(
+                  left: 16,
+                  bottom: 16,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
                     ),
-                  ),
-                  const Text(
-                    "Adam",
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFFBBDEFB),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(30),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(
-              height: 180,
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: CustomPaint(
-                        painter: CirclePatternPainter(
-                            color: const Color(0xFF1E88E5).withOpacity(0.2)),
+                    child: Text(
+                      "Day ${totalPregnancyDays}",
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
                   ),
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 100,
-                    child: Center(
-                      child: Icon(
-                        Icons.child_friendly,
-                        size: 120,
-                        color: const Color(0xFF42A5F5),
-                      ),
-                    ),
-                  ),
-                  if (hasPregnancyData)
-                    Positioned(
-                      left: 10,
-                      bottom: 10,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                        child: Text(
-                          "Day ${totalPregnancyDays}",
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
+                ),
+            ],
+          ),
         ),
-      );
-    }
+      ],
+    ),
+  );
+}
+
+Widget _buildModelViewer() {
+  return const BabyModelViewer(); // Using const for further optimization
+}
 
    Widget _buildPregnancyInfo() {
   return Container(
@@ -431,7 +522,7 @@
                 flex: 2,
                 child: SizedBox(
                   height: 150,
-                  child: Lottie.asset('assets/lottie/family.json'),
+                  child: Lottie.asset('assets/lottie/family2.json'),
                 ),
               ),
               Expanded(
