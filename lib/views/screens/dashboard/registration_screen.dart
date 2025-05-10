@@ -348,46 +348,46 @@ class _PregnancyRegistrationScreenState extends State<PregnancyRegistrationScree
             const SizedBox(height: 20),
             
             // Preview of due date based on selected date
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.blue[50],
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Based on this date:',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Text(
-                        'Estimated Due Date: ',
-                        style: TextStyle(
-                          fontSize: 16,
-                        ),
-                      ),
-                      Text(
-                        DateFormat('dd MMMM yyyy').format(
-                          _selectedDate.add(const Duration(days: 280)),
-                        ),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF10B2CF),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+           Container(
+  padding: const EdgeInsets.all(16),
+  decoration: BoxDecoration(
+    color: Colors.blue[50],
+    borderRadius: BorderRadius.circular(12),
+  ),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Text(
+        'Based on this date:',
+        style: TextStyle(
+          fontSize: 12, // Ukuran font lebih kecil
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      const SizedBox(height: 8),
+      Row(
+        children: [
+          const Text(
+            'Estimated Due Date: ',
+            style: TextStyle(
+              fontSize: 14, // Ukuran font lebih kecil
             ),
+          ),
+          Text(
+            DateFormat('dd MMM yyyy').format(
+              _selectedDate.add(const Duration(days: 280)),
+            ),
+            style: const TextStyle(
+              fontSize: 14, // Ukuran font lebih kecil
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF10B2CF),
+            ),
+          ),
+        ],
+      ),
+    ],
+  ),
+),
             const SizedBox(height: 32),
             
             // Submit Button

@@ -3,6 +3,9 @@ import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'calender.dart';
 import 'registration_screen.dart';
+import 'package:lottie/lottie.dart';
+import 'package:model_viewer_plus/model_viewer_plus.dart';
+import 'dart:ui' as ui;
 
 class HomeScreen extends StatefulWidget {
   final ScrollController scrollController;
@@ -12,6 +15,94 @@ class HomeScreen extends StatefulWidget {
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class BabyModelViewer extends StatefulWidget {
+  const BabyModelViewer({Key? key}) : super(key: key);
+
+  @override
+  State<BabyModelViewer> createState() => _BabyModelViewerState();
+}
+
+class _BabyModelViewerState extends State<BabyModelViewer>
+    with AutomaticKeepAliveClientMixin {
+  bool _isLoading = true;
+  bool _errorLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadModel();
+  }
+
+  Future<void> _loadModel() async {
+    try {
+      // Simulate loading delay
+      await Future.delayed(const Duration(seconds: 2));
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorLoading = true;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+
+    return Container(
+      width: double.infinity,
+      height: 250,
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: _errorLoading
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Failed to load 3D model',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ],
+              ),
+            )
+          : _isLoading
+              ? Center(
+                  child: Lottie.asset(
+                    'assets/lottie/loading.json',
+                    width: 100,
+                    height: 100,
+                  ),
+                )
+              : ModelViewer(
+                  src: 'assets/models/baby3.glb',
+                  alt: "3D Model Janin",
+                  autoRotate: true,
+                  cameraControls: true,
+                  autoPlay: true,
+                  ar: false,
+                  shadowIntensity: 1.0,
+                  exposure: 0.5,
+                  backgroundColor: Colors.transparent,
+                ),
+    );
+  }
+
+  @override
+  bool get wantKeepAlive => true;
 }
 
 // Model for midwife visit data
@@ -33,7 +124,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool hasPregnancyData = false;
 
   // Pregnancy data fields
-  String userName = "Adam";
+  String userName = "Hariadi";
   DateTime? dueDate;
   int pregnancyWeeks = 0;
   int pregnancyDays = 0;
@@ -55,6 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+
     // Due date will be calculated after registration
   }
 
@@ -74,7 +166,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     MediaQuery.of(context).padding.top), // Status bar height
             _buildHeader(),
             _buildPregnancyCard(),
-            _buildHealthData(),
+            _buildPregnancyInfo(),
+            _buildHealthStats(),
+            _buildMidwifeVisitsChart(),
             _buildArticlesSection(),
           ],
         ),
@@ -161,7 +255,7 @@ class _HomeScreenState extends State<HomeScreen> {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF1565C0), Color(0xFF0D47A1)],
+          colors: [Color(0xFFF2F4F7), Color(0xFFF2F4F7)],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
@@ -175,6 +269,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Header section
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
             child: Column(
@@ -185,7 +280,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w500,
-                    color: Colors.white,
+                    color: Color(0xFFB3EAF4),
                   ),
                 ),
                 const Text(
@@ -193,45 +288,38 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFFBBDEFB),
+                    color: Color(0xFF11B3CF),
                   ),
                 ),
               ],
             ),
           ),
-          SizedBox(
-            height: 180,
+
+          // 3D Model section with the new widget
+          ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: 250,
+              maxHeight: 250,
+            ),
             child: Stack(
               children: [
-                Positioned.fill(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: CustomPaint(
-                      painter: CirclePatternPainter(
-                          color: const Color(0xFF1E88E5).withOpacity(0.2)),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 100,
-                  child: Center(
-                    child: Icon(
-                      Icons.child_friendly,
-                      size: 120,
-                      color: const Color(0xFF42A5F5),
-                    ),
-                  ),
-                ),
+                // Using the new widget here
+                const BabyModelViewer(),
+
+                // Day counter overlay
                 if (hasPregnancyData)
                   Positioned(
-                    left: 10,
-                    bottom: 10,
+                    left: 16,
+                    bottom: 16,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(30),
+                      ),
                       child: Text(
                         "Day ${totalPregnancyDays}",
                         style: const TextStyle(
@@ -248,6 +336,10 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildModelViewer() {
+    return const BabyModelViewer(); // Using const for further optimization
   }
 
   Widget _buildPregnancyInfo() {
@@ -406,7 +498,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                 Color(0xFF00ACC1)),
                           ),
                         ),
-                        // Add tiny baby icon at the progress position
                         Positioned(
                           left: (totalPregnancyDays / 280) *
                                   MediaQuery.of(context).size.width *
@@ -425,100 +516,78 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
+          : Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE0F7FA),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Icon(
-                    Icons.favorite_rounded,
-                    size: 48,
-                    color: Color(0xFF00838F),
+                Expanded(
+                  flex: 2,
+                  child: SizedBox(
+                    height: 150,
+                    child: Lottie.asset('assets/lottie/family2.json'),
                   ),
                 ),
-                const SizedBox(height: 16),
-                const Text(
-                  "Track Your Pregnancy",
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF00838F),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  "Register to track your pregnancy progress, health data, and get personalized advice",
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Color(0xFF546E7A),
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: () {
-                    // Navigate to registration screen
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => PregnancyRegistrationScreen(
-                          onRegistrationComplete: (pregnancyData) {
-                            setState(() {
-                              hasPregnancyData = true;
-
-                              // Update user data
-                              userName = pregnancyData.fullName;
-                              pregnancyCount = pregnancyData.pregnancyCount;
-                              childrenCount = pregnancyData.childrenCount;
-                              abortionCount = pregnancyData.abortionCount;
-                              firstDayOfPregnancy =
-                                  pregnancyData.firstDayOfPregnancy;
-
-                              // Update pregnancy progress data
-                              dueDate = pregnancyData.dueDate;
-                              pregnancyWeeks = pregnancyData.currentWeeks;
-                              pregnancyDays = pregnancyData.currentDays;
-                              trimester = pregnancyData.trimester;
-                              totalPregnancyDays = pregnancyData.totalDays;
-                            });
-                          },
-                        ),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    backgroundColor: const Color(0xFF00ACC1),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 16,
-                    ),
-                    elevation: 3,
-                    shadowColor: const Color(0xFF00ACC1).withOpacity(0.4),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Text(
-                        "Start Now",
+                Expanded(
+                  flex: 3,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "Start New Journey",
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 24,
                           fontWeight: FontWeight.bold,
+                          color: Color(0xFF00838F),
                         ),
                       ),
-                      SizedBox(width: 8),
-                      Icon(
-                        Icons.arrow_forward_rounded,
-                        size: 20,
-                        color: Colors.white,
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PregnancyRegistrationScreen(
+                                onRegistrationComplete: (pregnancyData) {
+                                  setState(() {
+                                    hasPregnancyData = true;
+                                    userName = pregnancyData.fullName;
+                                    pregnancyCount =
+                                        pregnancyData.pregnancyCount;
+                                    childrenCount = pregnancyData.childrenCount;
+                                    abortionCount = pregnancyData.abortionCount;
+                                    firstDayOfPregnancy =
+                                        pregnancyData.firstDayOfPregnancy;
+                                    dueDate = pregnancyData.dueDate;
+                                    pregnancyWeeks = pregnancyData.currentWeeks;
+                                    pregnancyDays = pregnancyData.currentDays;
+                                    trimester = pregnancyData.trimester;
+                                    totalPregnancyDays =
+                                        pregnancyData.totalDays;
+                                  });
+                                },
+                              ),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: const Color(0xFF00ACC1),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 16,
+                          ),
+                          elevation: 3,
+                          shadowColor: const Color(0xFF00ACC1).withOpacity(0.4),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                        ),
+                        child: const Text(
+                          "Start Now",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -528,69 +597,153 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildHealthData() {
+  Widget _buildHealthStats() {
     return Column(
       children: [
-        _buildPregnancyInfo(),
+        
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          padding: const EdgeInsets.all(16.0),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
-                spreadRadius: 1,
-                blurRadius: 5,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
                 "Health Data",
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),
               ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildInfoBox(
-                    title: "Tekanan Darah",
-                    value: "120/80",
-                    color: Colors.redAccent,
-                  ),
-                  _buildInfoBox(
-                    title: "Berat Badan",
-                    value: "60 kg",
-                    color: Colors.green,
-                  ),
-                  _buildInfoBox(
-                    title: "Tinggi Badan",
-                    value: "30 cm",
-                    color: Colors.orange,
-                  ),
-                  _buildInfoBox(
-                    title: "Detak Jantung",
-                    value: "2 bpm",
-                    color: Colors.purple,
-                  ),
-                ],
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 225, // Tinggi tetap, sesuaikan sesuai kebutuhan
+                child: GridView.count(
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 1.0), 
+                  crossAxisCount: 2,
+                  childAspectRatio: 1.5,
+                  mainAxisSpacing: 8,
+                  crossAxisSpacing: 8,
+                  children: [
+                    _buildColoredStatItem(
+                      title: "Tekanan Darah",
+                      value: "120/80",
+                      unit: "mmHg",
+                      icon: Icons.monitor_heart_outlined,
+                      color: Colors.blue[400]!,
+                    ),
+                    _buildColoredStatItem(
+                      title: "Detak Jantung",
+                      value: "89",
+                      unit: "BPM",
+                      icon: Icons.favorite_outline,
+                      color: Colors.red[400]!,
+                    ),
+                    _buildColoredStatItem(
+                      title: "Berat Badan",
+                      value: "70.5",
+                      unit: "Kg",
+                      icon: Icons.scale_outlined,
+                      color: Colors.orange[400]!,
+                    ),
+                    _buildColoredStatItem(
+                      title: "Tinggi Badan",
+                      value: "165.6",
+                      unit: "Cm",
+                      icon: Icons.straighten_outlined,
+                      color: Colors.lightBlue[400]!,
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
         ),
-        _buildMidwifeVisitsChart(),
       ],
     );
   }
+
+Widget _buildColoredStatItem({
+  required String title,
+  required String value,
+  required String unit,
+  required IconData icon,
+  required Color color,
+}) {
+  return Container(
+    decoration: BoxDecoration(
+      color: color.withOpacity(0.1),
+      borderRadius: BorderRadius.circular(12),
+      boxShadow: [
+        BoxShadow(
+          color: color.withOpacity(0.3),
+          offset: const Offset(0, 3),
+          blurRadius: 6,
+          spreadRadius: 0,
+        ),
+        BoxShadow(
+          color: Colors.white,
+          offset: const Offset(-2, -2),
+          blurRadius: 4,
+          spreadRadius: 0,
+        ),
+      ],
+    ),
+    padding: const EdgeInsets.all(12),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.3),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 18, color: color),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: color,
+                ),
+                overflow: TextOverflow.ellipsis, // Tambahkan ini
+                maxLines: 1, // Batasi 1 baris
+              ),
+            ),
+          ],
+        ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            Text(
+              unit,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[700],
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
 
   Widget _buildMidwifeVisitsChart() {
     // Mock data for midwife visits
@@ -668,13 +821,12 @@ class _HomeScreenState extends State<HomeScreen> {
             child: _buildLineChart(visits),
           ),
           const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 16,
             children: [
               _buildChartLegend(Colors.pink[300]!, "Blood Pressure"),
-              const SizedBox(width: 16),
               _buildChartLegend(Colors.blue[400]!, "Weight"),
-              const SizedBox(width: 16),
               _buildChartLegend(Colors.green[400]!, "Fetal Heart Rate"),
             ],
           ),

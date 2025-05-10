@@ -225,7 +225,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                   }
                 },
                 child: Text(
-                  _currentPage == _slides.length - 1 ? 'GET STARTED' : 'NEXT',
+                  _currentPage == _slides.length - 1 ? 'NEXT' : 'NEXT',
                   style: TextStyle(
                     color: Color(0xFF2BACE2),
                     fontWeight: FontWeight.w500,
