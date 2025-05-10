@@ -353,63 +353,66 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
     );
   }
 
-Widget _buildFeaturedVideoItem() {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Container(
-        height: 180,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.blue,
-          borderRadius: BorderRadius.circular(8),
-          image: DecorationImage(
-            image: AssetImage('assets/profile_image.jpg'),
-            fit: BoxFit.cover,
+  Widget _buildFeaturedVideoItem() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          height: 180,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.blue,
+            borderRadius: BorderRadius.circular(8),
+            image: DecorationImage(
+              image: AssetImage('assets/profile_image.jpg'),
+              fit: BoxFit.cover,
+            ),
           ),
         ),
-      ),
-      SizedBox(height: 8),
-      Row(
-        children: [
-          CircleAvatar(
-            radius: 16,
-            backgroundImage: AssetImage('assets/profile_image.jpg'),
-          ),
-          SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Video Title Here",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14, // Ukuran font lebih kecil
+        SizedBox(height: 8),
+        Row(
+          children: [
+            CircleAvatar(
+              radius: 16,
+              backgroundImage: AssetImage('assets/profile_image.jpg'),
+            ),
+            SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Video Title Here",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14, // Ukuran font lebih kecil
+                  ),
                 ),
-              ),
-              Wrap(
-                spacing: 4,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Text(
-                    "Channel Name",
-                    style: TextStyle(color: Colors.grey, fontSize: 12), // Ukuran font lebih kecil
-                  ),
-                  Icon(Icons.check_circle, size: 12, color: Colors.grey),
-                  Text(
-                    "12M views • 1 week ago",
-                    style: TextStyle(color: Colors.grey, fontSize: 12), // Ukuran font lebih kecil
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
-    ],
-  );
-}
-
+                Wrap(
+                  spacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      "Channel Name",
+                      style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12), // Ukuran font lebih kecil
+                    ),
+                    Icon(Icons.check_circle, size: 12, color: Colors.grey),
+                    Text(
+                      "12M views • 1 week ago",
+                      style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12), // Ukuran font lebih kecil
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 
   Widget _buildHistoryVideoItem() {
     return Column(
@@ -576,149 +579,81 @@ Widget _buildFeaturedVideoItem() {
     }
   }
 
-  Widget _buildInfoBox(
-      {required String title, required String value, required Color color}) {
-    return Expanded(
-      child: Container(
-        margin: EdgeInsets.symmetric(horizontal: 4),
-        padding: EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.4)),
-        ),
-        child: Column(
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: color,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 4),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildScreeningItem(
-      {required String title,
-      required String description,
-      required bool isDue}) {
+  Widget _buildColoredStatItem({
+    required String title,
+    required String value,
+    required String unit,
+    required IconData icon,
+    required Color color,
+  }) {
     return Container(
-      margin: EdgeInsets.only(bottom: 16),
-      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color:
-            isDue ? Colors.blue.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+        color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isDue ? Colors.blue : Colors.grey,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              isDue ? Icons.check : Icons.calendar_today,
-              color: Colors.white,
-              size: 20,
-            ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.3),
+            offset: const Offset(0, 3),
+            blurRadius: 6,
+            spreadRadius: 0,
           ),
-          SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: isDue ? Colors.blue.shade700 : Colors.black87,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  description,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.black54,
-                  ),
-                ),
-              ],
-            ),
+          BoxShadow(
+            color: Colors.white,
+            offset: const Offset(-2, -2),
+            blurRadius: 4,
+            spreadRadius: 0,
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildSymptomItem(
-      {required String symptom,
-      required String description,
-      required bool isCommon}) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 16),
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
+      padding: const EdgeInsets.all(12),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Container(
-            padding: EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isCommon ? Colors.orange : Colors.grey,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              isCommon ? Icons.info_outline : Icons.remove_circle_outline,
-              color: Colors.white,
-              size: 20,
-            ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.3),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 18, color: color),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: color,
+                  ),
+                  overflow: TextOverflow.ellipsis, // Tambahkan ini
+                  maxLines: 1, // Batasi 1 baris
+                ),
+              ),
+            ],
           ),
-          SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  symptom,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: isCommon ? Colors.orange.shade700 : Colors.black87,
-                  ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
                 ),
-                SizedBox(height: 4),
-                Text(
-                  description,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.black54,
-                  ),
+              ),
+              Text(
+                unit,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[700],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
@@ -979,19 +914,6 @@ Widget _buildFeaturedVideoItem() {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Container(
-                                    padding: EdgeInsets.all(16),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(16),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.grey.withOpacity(0.1),
-                                          spreadRadius: 1,
-                                          blurRadius: 5,
-                                          offset: const Offset(0, 2),
-                                        ),
-                                      ],
-                                    ),
                                     child: Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
@@ -1003,40 +925,51 @@ Widget _buildFeaturedVideoItem() {
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                        SizedBox(height: 12),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            _buildInfoBox(
-                                              title: "Tekanan Darah",
-                                              value: _weekData[_selectedWeek]
-                                                      ?['bp'] ??
-                                                  "-",
-                                              color: Colors.redAccent,
-                                            ),
-                                            _buildInfoBox(
-                                              title: "Berat Badan",
-                                              value: _weekData[_selectedWeek]
-                                                      ?['weight'] ??
-                                                  "-",
-                                              color: Colors.green,
-                                            ),
-                                            _buildInfoBox(
-                                              title: "Tinggi Badan",
-                                              value: _weekData[_selectedWeek]
-                                                      ?['height'] ??
-                                                  "-",
-                                              color: Colors.orange,
-                                            ),
-                                            _buildInfoBox(
-                                              title: "Detak Jantung",
-                                              value: _weekData[_selectedWeek]
-                                                      ?['heartRate'] ??
-                                                  "-",
-                                              color: Colors.purple,
-                                            ),
-                                          ],
+                                        LayoutBuilder(
+                                          builder: (context, constraints) {
+                                            return GridView.count(
+                                              shrinkWrap: true,
+                                              physics:const NeverScrollableScrollPhysics(), 
+                                              crossAxisCount: 2,
+                                              childAspectRatio:
+                                                  (constraints.maxWidth / 2) /
+                                                      120, // Dinamis
+                                              mainAxisSpacing: 12,
+                                              crossAxisSpacing: 12,
+                                              children: [
+                                                _buildColoredStatItem(
+                                                  title: "Tekanan Darah",
+                                                  value: "120/80",
+                                                  unit: "mmHg",
+                                                  icon: Icons
+                                                      .monitor_heart_outlined,
+                                                  color: Colors.blue[400]!,
+                                                ),
+                                                _buildColoredStatItem(
+                                                  title: "Detak Jantung",
+                                                  value: "89",
+                                                  unit: "BPM",
+                                                  icon: Icons.favorite_outline,
+                                                  color: Colors.red[400]!,
+                                                ),
+                                                _buildColoredStatItem(
+                                                  title: "Berat Badan",
+                                                  value: "70.5",
+                                                  unit: "Kg",
+                                                  icon: Icons.scale_outlined,
+                                                  color: Colors.orange[400]!,
+                                                ),
+                                                _buildColoredStatItem(
+                                                  title: "Tinggi Badan",
+                                                  value: "165.6",
+                                                  unit: "Cm",
+                                                  icon:
+                                                      Icons.straighten_outlined,
+                                                  color: Colors.lightBlue[400]!,
+                                                ),
+                                              ],
+                                            );
+                                          },
                                         ),
                                       ],
                                     ),
