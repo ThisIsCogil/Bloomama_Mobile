@@ -131,6 +131,7 @@ flutter:
     - assets/models/baby.glb
     - assets/models/baby2.glb
     - assets/models/baby3.glb
+    - assets/models/baby_fix.glb
 
   #   - images/a_dot_ham.jpeg
 
