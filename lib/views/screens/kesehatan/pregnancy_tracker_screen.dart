@@ -15,6 +15,8 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
   int _selectedWeek = 19;
   bool isSearching = false;
 
+  final Map<String, bool> _imageExistsCache = {};
+
   final Map<int, Map<String, dynamic>> _weekData = {
     1: {
       'size': '0.1 cm, Poppy seed',
@@ -536,39 +538,66 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
   Widget _getBabyImage() {
     final String imagePath = 'assets/baby/minggu$_selectedWeek.png';
 
+    // Check if we've already verified this image exists
+    if (_imageExistsCache.containsKey(imagePath)) {
+      return _renderImage(imagePath, _imageExistsCache[imagePath]!);
+    }
+
     return FutureBuilder<bool>(
-      future: _checkImageExists(imagePath),
+      future: _checkAndCacheImageExists(imagePath),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
         }
 
         final bool exists = snapshot.data ?? false;
-        if (exists) {
-          return Image.asset(
-            imagePath,
-            height: 300, // atau sesuaikan sesuai kebutuhan
-            fit: BoxFit.contain,
-          );
-        } else {
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.image_not_supported, size: 40, color: Colors.grey),
-              SizedBox(height: 6), // kecilkan dari 10 ke 6
-              Text(
-                'Gambar minggu$_selectedWeek tidak tersedia',
-                style: TextStyle(color: Colors.grey, fontSize: 14),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          );
-        }
+        return _renderImage(imagePath, exists);
       },
     );
   }
 
-// Helper method to check if an asset image exists
+  // Helper method to render the image based on existence
+  Widget _renderImage(String imagePath, bool exists) {
+    if (exists) {
+      return Image.asset(
+        imagePath,
+        height: 300,
+        fit: BoxFit.contain,
+      );
+    } else {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.image_not_supported, size: 40, color: Colors.grey),
+          SizedBox(height: 6),
+          Text(
+            'Gambar minggu$_selectedWeek tidak tersedia',
+            style: TextStyle(color: Colors.grey, fontSize: 14),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      );
+    }
+  }
+
+  // Modified helper method to check and cache image existence
+  Future<bool> _checkAndCacheImageExists(String assetPath) async {
+    if (_imageExistsCache.containsKey(assetPath)) {
+      return _imageExistsCache[assetPath]!;
+    }
+    
+    try {
+      await rootBundle.load(assetPath);
+      _imageExistsCache[assetPath] = true;
+      return true;
+    } catch (e) {
+      debugPrint('Image not found: $assetPath');
+      _imageExistsCache[assetPath] = false;
+      return false;
+    }
+  }
+
+  // Existing helper method (can be removed since we have the new one above)
   Future<bool> _checkImageExists(String assetPath) async {
     try {
       await rootBundle.load(assetPath);
@@ -578,7 +607,13 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
       return false;
     }
   }
-
+  
+  // Make sure to override dispose to clean up resources if needed
+  @override
+  void dispose() {
+    _imageExistsCache.clear();
+    super.dispose();
+  }
   Widget _buildColoredStatItem({
     required String title,
     required String value,

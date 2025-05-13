@@ -600,7 +600,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildHealthStats() {
     return Column(
       children: [
-        
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           child: Column(
@@ -615,52 +614,52 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-SizedBox(
-  height: 280, // Sesuaikan tinggi sesuai kebutuhan
-  child: LayoutBuilder(
-    builder: (context, constraints) {
-      return GridView.count(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: 2,
-        childAspectRatio: (constraints.maxWidth / 2) / 120, // Dinamis
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        children: [
-          _buildColoredStatItem(
-            title: "Tekanan Darah",
-            value: "120/80",
-            unit: "mmHg",
-            icon: Icons.monitor_heart_outlined,
-            color: Colors.blue[400]!,
-          ),
-          _buildColoredStatItem(
-            title: "Detak Jantung",
-            value: "89",
-            unit: "BPM",
-            icon: Icons.favorite_outline,
-            color: Colors.red[400]!,
-          ),
-          _buildColoredStatItem(
-            title: "Berat Badan",
-            value: "70.5",
-            unit: "Kg",
-            icon: Icons.scale_outlined,
-            color: Colors.orange[400]!,
-          ),
-          _buildColoredStatItem(
-            title: "Tinggi Badan",
-            value: "165.6",
-            unit: "Cm",
-            icon: Icons.straighten_outlined,
-            color: Colors.lightBlue[400]!,
-          ),
-        ],
-      );
-    },
-  ),
-)
-
+              SizedBox(
+                height: 280, // Sesuaikan tinggi sesuai kebutuhan
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: 2,
+                      childAspectRatio:
+                          (constraints.maxWidth / 2) / 120, // Dinamis
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      children: [
+                        _buildColoredStatItem(
+                          title: "Tekanan Darah",
+                          value: "120/80",
+                          unit: "mmHg",
+                          icon: Icons.monitor_heart_outlined,
+                          color: Colors.blue[400]!,
+                        ),
+                        _buildColoredStatItem(
+                          title: "Detak Jantung",
+                          value: "89",
+                          unit: "BPM",
+                          icon: Icons.favorite_outline,
+                          color: Colors.red[400]!,
+                        ),
+                        _buildColoredStatItem(
+                          title: "Berat Badan",
+                          value: "70.5",
+                          unit: "Kg",
+                          icon: Icons.scale_outlined,
+                          color: Colors.orange[400]!,
+                        ),
+                        _buildColoredStatItem(
+                          title: "Tinggi Badan",
+                          value: "165.6",
+                          unit: "Cm",
+                          icon: Icons.straighten_outlined,
+                          color: Colors.lightBlue[400]!,
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              )
             ],
           ),
         ),
@@ -668,7 +667,7 @@ SizedBox(
     );
   }
 
- Widget _buildColoredStatItem({
+  Widget _buildColoredStatItem({
     required String title,
     required String value,
     required String unit,
