@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:login/views/auth_screen.dart';
 import 'package:login/views/screens/Profile/edit.dart';
 import 'package:login/views/screens/Profile/help.dart';
 import 'package:login/views/screens/Profile/keamanan.dart';
 import '../../login.dart'; 
+import '../../auth_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   final ScrollController scrollController;
@@ -51,7 +53,7 @@ class ProfileScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => LoginScreen()),
+                  MaterialPageRoute(builder: (context) => AuthScreen()),
                 );
               },
               child: Text("LOGOUT", style: TextStyle(color: Colors.red)),

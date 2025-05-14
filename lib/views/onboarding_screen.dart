@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:login/views/auth_screen.dart';
 import 'login.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
@@ -220,7 +221,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                   } else {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => LoginScreen()),
+                      MaterialPageRoute(builder: (context) => AuthScreen()),
                     );
                   }
                 },

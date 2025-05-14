@@ -1,6 +1,11 @@
-class UserModel {
-  final String username;
-  final String password;
+class User {
+  String? name;
+  String email;
+  String password;
 
-  UserModel({required this.username, required this.password});
+  User({
+    this.name,
+    required this.email,
+    required this.password,
+  });
 }
