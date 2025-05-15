@@ -88,7 +88,7 @@ class _BabyModelViewerState extends State<BabyModelViewer>
                   ),
                 )
               : ModelViewer(
-                  src: 'assets/models/baby3.glb',
+                  src: 'assets/models/baby_fix.glb',
                   alt: "3D Model Janin",
                   autoRotate: true,
                   cameraControls: true,
@@ -284,7 +284,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const Text(
-                  "Adam",
+                  "Rahmat",
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,

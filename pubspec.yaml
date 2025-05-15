@@ -34,19 +34,21 @@ dependencies:
 
   # Existing packages
   
-  fl_chart: ^0.70.2
+  fl_chart: ^1.0.0
   easy_date_timeline: ^2.0.9
-  google_fonts: ^5.1.0 
+  google_fonts: ^6.2.1 
   intl: ^0.19.0  
   table_calendar: ^3.0.9
   model_viewer_plus: ^1.9.2
+  animated_snack_bar: ^0.4.0
+  awesome_dialog: ^3.2.1
   
   
   
   # Animation packages for splash screen
   flutter_spinkit: ^5.2.0    # Various loading animations
   animated_text_kit: ^4.2.2  # Text animations
-  lottie: ^2.6.0            # Lottie animations
+  lottie: ^3.3.1            # Lottie animations
   flutter_animate: ^4.5.0    # Animation utilities
 
   # The following adds the Cupertino Icons font to your application.

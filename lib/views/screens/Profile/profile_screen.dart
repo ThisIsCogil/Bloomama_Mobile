@@ -3,15 +3,14 @@ import 'package:login/views/auth_screen.dart';
 import 'package:login/views/screens/Profile/edit.dart';
 import 'package:login/views/screens/Profile/help.dart';
 import 'package:login/views/screens/Profile/keamanan.dart';
-import '../../login.dart'; 
-import '../../auth_screen.dart';
+import 'package:login/controllers/auth_controller.dart';
 
 class ProfileScreen extends StatelessWidget {
   final ScrollController scrollController;
-
+  final AuthController _authController = AuthController(); // Inisialisasi AuthController
+  
   ProfileScreen({required this.scrollController});
-
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -51,19 +50,30 @@ class ProfileScreen extends StatelessWidget {
             SizedBox(height: 20),
             TextButton(
               onPressed: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => AuthScreen()),
-                );
+                // Panggil fungsi logout dari AuthController
+                _authController.logout(context);
+                // Catatan: Navigasi ke Auth Screen sudah dihandle oleh AuthController
+                // setelah logout berhasil
               },
-              child: Text("LOGOUT", style: TextStyle(color: Colors.red)),
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.red.shade50,
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                minimumSize: Size(double.infinity, 50), // Tombol penuh lebar
+              ),
+              child: Text("LOGOUT", 
+                style: TextStyle(
+                  color: Colors.red, 
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16
+                )
+              ),
             ),
           ],
         ),
       ),
     );
   }
-
+  
   Widget _buildMenuItem(BuildContext context, String title, IconData icon, Widget page) {
     return ListTile(
       leading: Icon(icon, color: Color(0xFF11B3CF)),
