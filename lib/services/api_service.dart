@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
+import '../controllers/auth_controller.dart';
 
 class ApiService {
   static const String baseUrl = 'http://127.0.0.1:8000/api';
@@ -79,25 +80,44 @@ class ApiService {
   /// Logout
   static Future<Map<String, dynamic>> logout() async {
     final token = await getToken();
+    
     if (token == null) {
-      return {'message': 'No token found'};
+      throw 'Token tidak ditemukan. Tidak dapat logout.';
     }
 
-    final response = await http.post(
-      Uri.parse('$baseUrl/logout'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/logout'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      ).timeout(const Duration(seconds: 10));
 
-    await clearToken();
-    return jsonDecode(response.body);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        try {
+          return jsonDecode(response.body);
+        } catch (e) {
+          return {'status': true, 'message': 'Logout berhasil'};
+        }
+      } else {
+        String message;
+        try {
+          final errorData = jsonDecode(response.body);
+          message = errorData['message'] ?? 'Logout gagal. Status code: ${response.statusCode}';
+        } catch (e) {
+          message = 'Logout gagal. Status code: ${response.statusCode}';
+        }
+        throw message;
+      }
+    } catch (e) {
+      throw 'Logout API error: ${e.toString()}';
+    }
   }
 
   /// Get authenticated user profile
   static Future<User?> getUserProfile() async {
-    final token = await getToken();
+    final token = await AuthController().getToken();
     if (token == null) return null;
 
     final response = await http.get(
@@ -116,4 +136,48 @@ class ApiService {
     }
     return null;
   }
+
+  /// Update user profile
+  static Future<Map<String, dynamic>> updateProfile({
+  String? name,
+  String? phoneNumber,
+  String? address,
+  String? profilePicture,
+}) async {
+   final token = await AuthController().getToken(); 
+  if (token == null) {
+    throw 'Token tidak ditemukan. Silakan login kembali.';
+  }
+
+  // Prepare the request body with only non-null values
+  final Map<String, dynamic> requestBody = {};
+  if (name != null) requestBody['name'] = name;
+  if (phoneNumber != null) requestBody['phone_number'] = phoneNumber;
+  if (address != null) requestBody['address'] = address;
+  if (profilePicture != null) requestBody['profile_picture'] = profilePicture;
+
+  final response = await http.put(
+    Uri.parse('$baseUrl/update-profile'), // ✅ pastikan sesuai dengan backend
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token', // ✅ pastikan format Bearer benar
+    },
+    body: jsonEncode(requestBody),
+  );
+
+  final data = jsonDecode(response.body);
+
+  if (response.statusCode == 200) {
+    final updatedUser = User.fromJson(data['data']['user']);
+    await AuthController().saveUser(updatedUser);
+    return {
+      'status': true,
+      'message': data['message'] ?? 'Profil berhasil diperbarui',
+      'user': updatedUser,
+    };
+  } else {
+    throw data['message'] ?? 'Gagal memperbarui profil';
+  }
+}
+
 }
