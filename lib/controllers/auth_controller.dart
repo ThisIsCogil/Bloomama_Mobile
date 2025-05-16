@@ -151,51 +151,63 @@ class AuthController {
     }
   }
 
-  Future<void> updateProfile(
-    User updatedUser, 
-    BuildContext context, {
-    VoidCallback? onSuccess,
-  }) async {
-    try {
-      if (updatedUser.name.isEmpty) {
-        throw "Nama tidak boleh kosong";
-      }
-
-      // Show loading indicator
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => Center(
-          child: Lottie.asset(
-            'assets/lottie/loading.json',
-            width: 150,
-            height: 150,
-            fit: BoxFit.fill,
-          ),
+  Future<void> updateProfile({
+  required BuildContext context,
+  String? name,
+  String? phoneNumber,
+  String? address,
+  String? profilePicture,
+  VoidCallback? onSuccess,
+}) async {
+   try {
+    // Cek token terlebih dahulu
+    final token = await getToken();
+    if (token == null) {
+      throw 'Anda harus login terlebih dahulu';
+    }
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Center(
+        child: Lottie.asset(
+          'assets/lottie/loading.json',
+          width: 150,
+          height: 150,
+          fit: BoxFit.fill,
         ),
-      );
-      
-      // Save to shared preferences
+      ),
+    );
+
+    // Call API to update profile
+    final response = await ApiService.updateProfile(
+      name: name,
+      phoneNumber: phoneNumber,
+      address: address,
+      profilePicture: profilePicture,
+    );
+
+    // Close loading dialog
+    Navigator.pop(context);
+
+    if (response['status'] == true) {
+      // Update local user data
+      final updatedUser = response['user'] as User;
       await saveUser(updatedUser);
-      
-      // TODO: If you have an API update endpoint, call it here
-      // await ApiService.updateProfile(updatedUser);
-      
-      Navigator.pop(context); // Close loading dialog
-      
-      _showSuccessSnackBar(context, "Profil berhasil diperbarui");
-      
-      // Call the callback to refresh parent if provided
+
+      _showSuccessSnackBar(context, 'Profil berhasil diperbarui');
+
+      // Call success callback if provided
       if (onSuccess != null) {
         onSuccess();
       }
-      
-      Navigator.pop(context); // Go back to previous screen
-    } catch (e) {
-      Navigator.pop(context); // Close loading dialog
-      _showErrorSnackBar(context, "Gagal memperbarui profil: ${e.toString()}");
+    } else {
+      throw response['message'] ?? 'Gagal memperbarui profil';
     }
+  } catch (e) {
+    Navigator.pop(context); // Close loading dialog in case of error
+    _showErrorSnackBar(context, e.toString());
   }
+}
 
   Future<void> logout(BuildContext context) async {
     bool confirmLogout = false;
