@@ -180,4 +180,34 @@ class ApiService {
   }
 }
 
+static Future<Map<String, dynamic>> changePassword({
+  required String currentPassword,
+  required String newPassword,
+  required String confirmPassword,
+}) async {
+  final token = await AuthController().getToken();
+  if (token == null) throw 'Token tidak ditemukan. Silakan login ulang.';
+
+  final response = await http.post(
+    Uri.parse('$baseUrl/change-password'),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    },
+    body: jsonEncode({
+      'current_password': currentPassword,
+      'new_password': newPassword,
+      'new_password_confirmation': confirmPassword,
+    }),
+  );
+
+  final data = jsonDecode(response.body);
+  if (response.statusCode == 200) {
+    return {'status': true, 'message': data['message'] ?? 'Kata sandi berhasil diubah'};
+  } else {
+    throw data['message'] ?? 'Gagal mengubah kata sandi';
+  }
+}
+
+
 }
