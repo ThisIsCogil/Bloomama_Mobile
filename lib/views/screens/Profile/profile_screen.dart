@@ -5,6 +5,7 @@ import 'package:login/views/screens/Profile/keamanan.dart';
 import 'package:login/controllers/auth_controller.dart';
 import 'package:login/models/user_model.dart';
 import 'package:animated_snack_bar/animated_snack_bar.dart';
+import 'package:flutter/services.dart';
 
 class ProfileScreen extends StatefulWidget {
   final ScrollController scrollController;
@@ -63,6 +64,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Get screen size for responsive layout
+    final Size screenSize = MediaQuery.of(context).size;
+    final bool isSmallScreen = screenSize.width < 360;
+    final bool isTablet = screenSize.width >= 600;
+    
+    // Calculate the minimum screen height required for all content
+    final double statusBarHeight = MediaQuery.of(context).padding.top;
+    final double bottomPadding = MediaQuery.of(context).padding.bottom;
+    // Minimum height ensures scrolling works even on larger screens
+    final double minContentHeight = screenSize.height + 100;
+    
     return Scaffold(
       backgroundColor: Colors.white,
       body: _isLoading
@@ -78,138 +90,213 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: SingleChildScrollView(
                 controller: widget.scrollController,
                 physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  children: [
-                    _buildProfileHeader(),
-                    const SizedBox(height: 24),
-                    _buildMenuItems(),
-                    const SizedBox(height: 24),
-                    _buildLogoutButton(),
-                    const SizedBox(height: 24),
-                  ],
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: minContentHeight,
+                  ),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return Column(
+                        children: [
+                          _buildProfileHeader(isSmallScreen, isTablet),
+                          SizedBox(height: isTablet ? 32 : 24),
+                          _buildMenuItems(isTablet),
+                          SizedBox(height: isTablet ? 32 : 24),
+                          _buildLogoutButton(isTablet),
+                          // Add extra padding at bottom to ensure the logout button 
+                          // is visible above the navigation bar
+                          SizedBox(height: bottomPadding + (isTablet ? 80 : 64)),
+                        ],
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
     );
   }
 
-  Widget _buildProfileHeader() {
+  Widget _buildProfileHeader(bool isSmallScreen, bool isTablet) {
     final double statusBarHeight = MediaQuery.of(context).padding.top;
+    // Calculate profile picture radius based on screen width
+    final double pictureRadius = isTablet ? 70 : (isSmallScreen ? 40 : 50);
+    final double statusIndicatorRadius = isTablet ? 8 : (isSmallScreen ? 4 : 6);
     
     return Container(
-      padding: EdgeInsets.fromLTRB(16, statusBarHeight + 16, 16, 32),
+      padding: EdgeInsets.fromLTRB(
+        16, 
+        statusBarHeight + (isTablet ? 24 : 16), 
+        16, 
+        isTablet ? 48 : 32
+      ),
       width: double.infinity,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Color(0x1A11B3CF),
+            color: const Color(0x1A11B3CF),
             blurRadius: 10,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         children: [
           // Profile Title
-          const Padding(
-            padding: EdgeInsets.only(bottom: 24),
+          Padding(
+            padding: EdgeInsets.only(bottom: isTablet ? 32 : 24),
             child: Text(
               'Profil',
               style: TextStyle(
-                fontSize: 22,
+                fontSize: isTablet ? 28 : (isSmallScreen ? 20 : 22),
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF11B3CF),
+                color: const Color(0xFF11B3CF),
               ),
             ),
           ),
-          // Profile Picture with Status Indicator
-          Stack(
-            alignment: Alignment.bottomRight,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFF11B3CF), width: 3),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
-                child: CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Colors.grey[200],
-                  backgroundImage: _user?.profilePicture != null
-                      ? NetworkImage(_user!.profilePicture!)
-                      : const AssetImage('assets/profile_pic.png') as ImageProvider,
-                ),
-              ),
-              // Status indicator
-              Container(
-                padding: const EdgeInsets.all(2),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                ),
-                child: const CircleAvatar(
-                  radius: 6,
-                  backgroundColor: Colors.green,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // User Name
-          Text(
-            _user?.name ?? "Nama Pengguna",
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 4),
-          // User Email
-          Text(
-            _user?.email ?? "email@example.com",
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
-          ),
-          const SizedBox(height: 12),
-          // Status Badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFF11B3CF).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(
-                color: const Color(0xFF11B3CF).withOpacity(0.3),
-              ),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
+          
+          // Tablet Layout - Horizontal arrangement for profile info
+          if (isTablet)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                CircleAvatar(
-                  radius: 4,
-                  backgroundColor: Color(0xFF11B3CF),
-                ),
-                SizedBox(width: 6),
-                Text(
-                  "Aktif",
-                  style: TextStyle(
-                    color: Color(0xFF11B3CF),
-                    fontWeight: FontWeight.w500,
-                    fontSize: 12,
+                // Profile Picture with Status Indicator
+                _buildProfilePicture(pictureRadius, statusIndicatorRadius),
+                const SizedBox(width: 24),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // User Name
+                      Text(
+                        _user?.name ?? "Nama Pengguna",
+                        style: const TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      // User Email
+                      Text(
+                        _user?.email ?? "email@example.com",
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // Status Badge
+                      _buildStatusBadge(isTablet),
+                    ],
                   ),
                 ),
               ],
+            )
+          else
+            // Mobile Layout - Vertical arrangement
+            Column(
+              children: [
+                // Profile Picture with Status Indicator
+                _buildProfilePicture(pictureRadius, statusIndicatorRadius),
+                SizedBox(height: isSmallScreen ? 12 : 16),
+                // User Name
+                Text(
+                  _user?.name ?? "Nama Pengguna",
+                  style: TextStyle(
+                    fontSize: isSmallScreen ? 20 : 22,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+                SizedBox(height: isSmallScreen ? 2 : 4),
+                // User Email
+                Text(
+                  _user?.email ?? "email@example.com",
+                  style: TextStyle(
+                    fontSize: isSmallScreen ? 12 : 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                SizedBox(height: isSmallScreen ? 8 : 12),
+                // Status Badge
+                _buildStatusBadge(isTablet),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfilePicture(double radius, double statusIndicatorRadius) {
+    return Stack(
+      alignment: Alignment.bottomRight,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFF11B3CF), width: 3),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: CircleAvatar(
+            radius: radius,
+            backgroundColor: Colors.grey[200],
+            backgroundImage: _user?.profilePicture != null
+                ? NetworkImage(_user!.profilePicture!)
+                : const AssetImage('assets/logo.png') as ImageProvider,
+          ),
+        ),
+        // Status indicator
+        Container(
+          padding: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 2),
+          ),
+          child: CircleAvatar(
+            radius: statusIndicatorRadius,
+            backgroundColor: Colors.green,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatusBadge(bool isTablet) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isTablet ? 16 : 12, 
+        vertical: isTablet ? 8 : 6
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFF11B3CF).withOpacity(0.1),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(
+          color: const Color(0xFF11B3CF).withOpacity(0.3),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircleAvatar(
+            radius: isTablet ? 5 : 4,
+            backgroundColor: const Color(0xFF11B3CF),
+          ),
+          SizedBox(width: isTablet ? 8 : 6),
+          Text(
+            "Aktif",
+            style: TextStyle(
+              color: const Color(0xFF11B3CF),
+              fontWeight: FontWeight.w500,
+              fontSize: isTablet ? 14 : 12,
             ),
           ),
         ],
@@ -217,12 +304,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildMenuItems() {
+  Widget _buildMenuItems(bool isTablet) {
+    // For tablet, we can use a wider max width but center the container
+    double maxWidth = isTablet ? 500 : double.infinity;
+    
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      constraints: BoxConstraints(maxWidth: maxWidth),
+      margin: EdgeInsets.symmetric(horizontal: isTablet ? 24 : 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
         border: Border.all(color: const Color(0xFF11B3CF).withOpacity(0.1)),
         boxShadow: [
           BoxShadow(
@@ -239,6 +330,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             context: context,
             title: "Edit Profil",
             icon: Icons.person_outline,
+            isTablet: isTablet,
             onTap: () {
               if (_user != null) {
                 Navigator.push(
@@ -253,21 +345,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
               }
             },
           ),
-          _buildDivider(),
+          _buildDivider(isTablet),
           _buildMenuItem(
             context: context,
             title: "Keamanan Akun",
             icon: Icons.shield_outlined,
+            isTablet: isTablet,
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => SecurityScreen()),
             ),
           ),
-          _buildDivider(),
+          _buildDivider(isTablet),
           _buildMenuItem(
             context: context,
             title: "Pusat Bantuan",
             icon: Icons.help_outline,
+            isTablet: isTablet,
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => HelpScreen()),
@@ -278,9 +372,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildDivider() {
+  Widget _buildDivider(bool isTablet) {
     return Padding(
-      padding: const EdgeInsets.only(left: 56),
+      padding: EdgeInsets.only(left: isTablet ? 72 : 56),
       child: Divider(
         height: 1,
         thickness: 0.5,
@@ -294,42 +388,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required String title,
     required IconData icon,
     required VoidCallback onTap,
+    required bool isTablet,
   }) {
     return InkWell(
       onTap: onTap,
       splashColor: const Color(0xFF11B3CF).withOpacity(0.1),
       highlightColor: const Color(0xFF11B3CF).withOpacity(0.05),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: EdgeInsets.symmetric(
+          horizontal: isTablet ? 24 : 16, 
+          vertical: isTablet ? 18 : 14
+        ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(isTablet ? 10 : 8),
               decoration: BoxDecoration(
                 color: const Color(0xFF11B3CF).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(isTablet ? 12 : 10),
               ),
               child: Icon(
                 icon,
                 color: const Color(0xFF11B3CF),
-                size: 22,
+                size: isTablet ? 24 : 22,
               ),
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: isTablet ? 20 : 16),
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(
-                  fontSize: 16,
+                style: TextStyle(
+                  fontSize: isTablet ? 18 : 16,
                   fontWeight: FontWeight.w500,
-                  color: Color(0xFF333333),
+                  color: const Color(0xFF333333),
                 ),
               ),
             ),
-            const Icon(
+            Icon(
               Icons.arrow_forward_ios,
-              color: Color(0xFF11B3CF),
-              size: 16,
+              color: const Color(0xFF11B3CF),
+              size: isTablet ? 18 : 16,
             ),
           ],
         ),
@@ -337,33 +435,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildLogoutButton() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+  Widget _buildLogoutButton(bool isTablet) {
+    // For tablet, we can use a wider max width but centered
+    double maxWidth = isTablet ? 500 : double.infinity;
+    
+    return Container(
+      constraints: BoxConstraints(maxWidth: maxWidth),
+      padding: EdgeInsets.symmetric(horizontal: isTablet ? 24 : 16),
+      width: double.infinity,
       child: ElevatedButton(
         onPressed: () => _authController.logout(context),
         style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: EdgeInsets.symmetric(vertical: isTablet ? 18 : 16),
           backgroundColor: const Color(0xFF11B3CF),
           foregroundColor: Colors.white,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
           ),
         ),
-        child: const Row(
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               Icons.logout_rounded,
               color: Colors.white,
-              size: 20,
+              size: isTablet ? 22 : 20,
             ),
-            SizedBox(width: 8),
+            SizedBox(width: isTablet ? 10 : 8),
             Text(
               "Keluar",
               style: TextStyle(
-                fontSize: 16,
+                fontSize: isTablet ? 18 : 16,
                 fontWeight: FontWeight.w500,
                 color: Colors.white,
               ),
