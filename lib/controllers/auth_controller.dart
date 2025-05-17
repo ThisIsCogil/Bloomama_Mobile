@@ -7,7 +7,7 @@ import '../models/user_model.dart';
 import '../services/api_service.dart';
 import '../views/navbar.dart';
 import '../views/auth_screen.dart';
-import 'dart:convert'; 
+import 'dart:convert';
 
 class AuthController {
   static const String _userKey = 'user_data';
@@ -49,7 +49,8 @@ class AuthController {
     return prefs.getString(_tokenKey);
   }
 
-  Future<void> login(String email, String password, BuildContext context) async {
+  Future<void> login(
+      String email, String password, BuildContext context) async {
     try {
       if (email.isEmpty || password.isEmpty) {
         throw "Email dan password harus diisi";
@@ -77,7 +78,7 @@ class AuthController {
         final token = data['token'] as String;
 
         final user = User.fromJson(userJson).copyWith(token: token);
-        
+
         await saveUser(user);
         await saveToken(token);
 
@@ -105,9 +106,9 @@ class AuthController {
     VoidCallback? onSuccess,
   }) async {
     try {
-      if (user.name.isEmpty || 
-          user.email.isEmpty || 
-          user.password == null || 
+      if (user.name.isEmpty ||
+          user.email.isEmpty ||
+          user.password == null ||
           user.password!.isEmpty) {
         throw "Semua field harus diisi";
       }
@@ -152,62 +153,116 @@ class AuthController {
   }
 
   Future<void> updateProfile({
-  required BuildContext context,
-  String? name,
-  String? phoneNumber,
-  String? address,
-  String? profilePicture,
-  VoidCallback? onSuccess,
-}) async {
-   try {
-    // Cek token terlebih dahulu
-    final token = await getToken();
-    if (token == null) {
-      throw 'Anda harus login terlebih dahulu';
-    }
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => Center(
-        child: Lottie.asset(
-          'assets/lottie/loading.json',
-          width: 150,
-          height: 150,
-          fit: BoxFit.fill,
-        ),
-      ),
-    );
-
-    // Call API to update profile
-    final response = await ApiService.updateProfile(
-      name: name,
-      phoneNumber: phoneNumber,
-      address: address,
-      profilePicture: profilePicture,
-    );
-
-    // Close loading dialog
-    Navigator.pop(context);
-
-    if (response['status'] == true) {
-      // Update local user data
-      final updatedUser = response['user'] as User;
-      await saveUser(updatedUser);
-
-      _showSuccessSnackBar(context, 'Profil berhasil diperbarui');
-
-      // Call success callback if provided
-      if (onSuccess != null) {
-        onSuccess();
+    required BuildContext context,
+    String? name,
+    String? phoneNumber,
+    String? address,
+    String? profilePicture,
+    VoidCallback? onSuccess,
+  }) async {
+    try {
+      // Cek token terlebih dahulu
+      final token = await getToken();
+      if (token == null) {
+        throw 'Anda harus login terlebih dahulu';
       }
-    } else {
-      throw response['message'] ?? 'Gagal memperbarui profil';
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Center(
+          child: Lottie.asset(
+            'assets/lottie/loading.json',
+            width: 150,
+            height: 150,
+            fit: BoxFit.fill,
+          ),
+        ),
+      );
+
+      // Call API to update profile
+      final response = await ApiService.updateProfile(
+        name: name,
+        phoneNumber: phoneNumber,
+        address: address,
+        profilePicture: profilePicture,
+      );
+
+      // Close loading dialog
+      Navigator.pop(context);
+
+      if (response['status'] == true) {
+        // Update local user data
+        final updatedUser = response['user'] as User;
+        await saveUser(updatedUser);
+
+        _showSuccessSnackBar(context, 'Profil berhasil diperbarui');
+
+        // Call success callback if provided
+        if (onSuccess != null) {
+          onSuccess();
+        }
+      } else {
+        throw response['message'] ?? 'Gagal memperbarui profil';
+      }
+    } catch (e) {
+      Navigator.pop(context); // Close loading dialog in case of error
+      _showErrorSnackBar(context, e.toString());
     }
-  } catch (e) {
-    Navigator.pop(context); // Close loading dialog in case of error
-    _showErrorSnackBar(context, e.toString());
   }
-}
+
+  Future<void> changePassword({
+    required BuildContext context,
+    required String currentPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    try {
+      final token = await getToken();
+      if (token == null) {
+        throw 'Anda harus login terlebih dahulu';
+      }
+
+      if (newPassword != confirmPassword) {
+        throw 'Password baru dan konfirmasi tidak cocok';
+      }
+
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Center(
+          child: Lottie.asset(
+            'assets/lottie/loading.json',
+            width: 150,
+            height: 150,
+            fit: BoxFit.fill,
+          ),
+        ),
+      );
+
+      final response = await ApiService.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+        confirmPassword: confirmPassword,
+      );
+
+      Navigator.pop(context); // Close loading
+
+      if (response['status'] == true) {
+        _showSuccessSnackBar(
+            context, response['message'] ?? 'Password berhasil diubah');
+
+        // Kembali ke halaman sebelumnya
+        await Future.delayed(
+            Duration(milliseconds: 200)); // beri waktu untuk snack bar tampil
+        Navigator.pop(context);
+      } else {
+        throw response['message'] ?? 'Gagal mengubah password';
+      }
+    } catch (e) {
+      Navigator.pop(context); // Close loading in case of error
+      _showErrorSnackBar(context, e.toString());
+    }
+  }
 
   Future<void> logout(BuildContext context) async {
     bool confirmLogout = false;
@@ -248,7 +303,7 @@ class AuthController {
       } catch (e) {
         print("API logout error: $e");
       }
-      
+
       await clearUser();
 
       Navigator.pop(context);

@@ -24,6 +24,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _phoneController;
   late TextEditingController _addressController;
   String? _profilePicture;
+  
+  // Warna tema utama
+  final Color _themeColor = const Color(0xFF11B3CF);
 
   @override
   void initState() {
@@ -45,31 +48,44 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Edit Profile'),
+        elevation: 0,
+        backgroundColor: Colors.white,
+        foregroundColor: _themeColor,
+        centerTitle: true,
+        title: const Text(
+          'Edit Profile',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+          ),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.save),
+            icon: const Icon(Icons.check_rounded),
             onPressed: _submitForm,
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         child: Form(
           key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               _buildProfilePicture(),
-              const SizedBox(height: 20),
+              const SizedBox(height: 32),
               _buildNameField(),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               _buildEmailField(),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               _buildPhoneField(),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               _buildAddressField(),
-              const SizedBox(height: 24),
+              const SizedBox(height: 40),
               _buildSaveButton(),
             ],
           ),
@@ -84,19 +100,42 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       child: Stack(
         alignment: Alignment.bottomRight,
         children: [
-          CircleAvatar(
-            radius: 60,
-            backgroundImage: _profilePicture != null
-                ? NetworkImage(_profilePicture!)
-                : const AssetImage('assets/logo.png') as ImageProvider,
+          Container(
+            height: 120,
+            width: 120,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: _themeColor, width: 3),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: CircleAvatar(
+              radius: 55,
+              backgroundColor: Colors.grey[200],
+              backgroundImage: _profilePicture != null
+                  ? NetworkImage(_profilePicture!)
+                  : const AssetImage('assets/logo.png') as ImageProvider,
+            ),
           ),
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.blue,
+              color: _themeColor,
               shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: _themeColor.withOpacity(0.4),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-            child: const Icon(Icons.edit, color: Colors.white, size: 20),
+            child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 18),
           ),
         ],
       ),
@@ -104,13 +143,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Widget _buildNameField() {
-    return TextFormField(
+    return _buildTextField(
       controller: _nameController,
-      decoration: InputDecoration(
-        labelText: 'Nama Lengkap',
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(Icons.person),
-      ),
+      label: 'Nama Lengkap',
+      icon: Icons.person_outline_rounded,
       validator: (value) {
         if (value == null || value.isEmpty) {
           return 'Nama tidak boleh kosong';
@@ -121,80 +157,186 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Widget _buildEmailField() {
-    return TextFormField(
+    return _buildTextField(
       initialValue: widget.user.email,
-      decoration: InputDecoration(
-        labelText: 'Email',
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(Icons.email),
-      ),
+      label: 'Email',
+      icon: Icons.email_outlined,
       readOnly: true,
     );
   }
 
   Widget _buildPhoneField() {
-    return TextFormField(
+    return _buildTextField(
       controller: _phoneController,
-      decoration: InputDecoration(
-        labelText: 'Nomor Telepon',
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(Icons.phone),
-      ),
+      label: 'Nomor Telepon',
+      icon: Icons.phone_outlined,
       keyboardType: TextInputType.phone,
     );
   }
 
   Widget _buildAddressField() {
-    return TextFormField(
+    return _buildTextField(
       controller: _addressController,
-      decoration: InputDecoration(
-        labelText: 'Alamat',
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(Icons.location_on),
-      ),
+      label: 'Alamat',
+      icon: Icons.location_on_outlined,
       maxLines: 3,
     );
   }
 
+  Widget _buildTextField({
+    TextEditingController? controller,
+    String? initialValue,
+    required String label,
+    required IconData icon,
+    bool readOnly = false,
+    TextInputType? keyboardType,
+    int maxLines = 1,
+    String? Function(String?)? validator,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.05),
+            blurRadius: 5,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: TextFormField(
+        controller: controller,
+        initialValue: initialValue,
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(color: Colors.grey.shade600),
+          prefixIcon: Icon(icon, color: _themeColor, size: 22),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade200, width: 1),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: _themeColor, width: 1.5),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.redAccent, width: 1),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
+          ),
+          filled: true,
+          fillColor: Colors.grey.shade50,
+          contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        ),
+        style: const TextStyle(fontSize: 16),
+        readOnly: readOnly,
+        keyboardType: keyboardType,
+        maxLines: maxLines,
+        validator: validator,
+      ),
+    );
+  }
+
   Widget _buildSaveButton() {
-  return SizedBox(
-    width: double.infinity,
-    child: ElevatedButton(
-      onPressed: _submitForm,
-      style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: _submitForm,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: _themeColor,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 2,
+          shadowColor: _themeColor.withOpacity(0.4),
+        ),
+        child: const Text(
+          'SIMPAN PERUBAHAN',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+          ),
         ),
       ),
-      child: const Text('SIMPAN PERUBAHAN'),
-    ),
-  );
-}
+    );
+  }
 
   void _showImageSourceDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Pilih Sumber Foto'),
+        title: Text(
+          'Pilih Sumber Foto',
+          style: TextStyle(color: _themeColor, fontWeight: FontWeight.w600),
+          textAlign: TextAlign.center,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('Kamera'),
+            _buildImageSourceOption(
+              icon: Icons.camera_alt_rounded,
+              title: 'Kamera',
               onTap: () {
                 Navigator.pop(context);
                 _pickImageFromCamera();
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Galeri'),
+            const SizedBox(height: 8),
+            const Divider(height: 1),
+            const SizedBox(height: 8),
+            _buildImageSourceOption(
+              icon: Icons.photo_library_rounded,
+              title: 'Galeri',
               onTap: () {
                 Navigator.pop(context);
                 _pickImageFromGallery();
               },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImageSourceOption({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: _themeColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: _themeColor, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
@@ -232,6 +374,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           
           widget.onProfileUpdated?.call(updatedUser);
           Navigator.pop(context);
+          _showSnackBar('Profil berhasil diperbarui', AnimatedSnackBarType.success);
         },
       );
     } catch (e) {
