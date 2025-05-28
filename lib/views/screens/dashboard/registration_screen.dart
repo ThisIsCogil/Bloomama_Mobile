@@ -281,7 +281,7 @@ void _submitForm() async {
                   Row(
                     children: [
                       const Text(
-                        'Perkiraan Persalinan Bayi Adalah: ',
+                        'Perkiraan Bayi Lahir Adalah: ',
                         style: TextStyle(fontSize: 14),
                       ),
                     
