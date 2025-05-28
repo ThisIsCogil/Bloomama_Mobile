@@ -238,7 +238,7 @@ void _submitForm() async {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Hari Pertama Kehamilan',
+                          'Hari Pertama Haid Terakhir',
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.grey,
@@ -281,7 +281,7 @@ void _submitForm() async {
                   Row(
                     children: [
                       const Text(
-                        'Perkiraan Bayi Lahir Adalah: ',
+                        'Perkiraan Persalinan Bayi Adalah: ',
                         style: TextStyle(fontSize: 14),
                       ),
                     
