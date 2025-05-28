@@ -1,10 +1,23 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'calender.dart';
 import 'registration_screen.dart';
 import 'package:lottie/lottie.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
+import '../../../controllers/pregnancy_controller.dart';
+import '../../../controllers/auth_controller.dart';
+import '../../../services/api_service.dart';
+import '../../../models/health_model.dart';
+import '../../../models/content_model.dart';
+import '../../../models/user_pregnancy.dart';
+import '../../../models/user_model.dart';
+import '../../../controllers/content_provider.dart';
+import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:ui' as ui;
 
 class HomeScreen extends StatefulWidget {
@@ -105,71 +118,245 @@ class _BabyModelViewerState extends State<BabyModelViewer>
   bool get wantKeepAlive => true;
 }
 
-// Model for midwife visit data
-class MidwifeVisit {
-  final int week;
-  final int bloodPressure;
-  final double weight;
-  final int fetalHeartRate;
+  class _HomeScreenState extends State<HomeScreen>
+      with AutomaticKeepAliveClientMixin {
+    // Health data caching
+    HealthData? _cachedHealthData;
+    bool _isHealthDataLoading = false;
+    bool _hasHealthDataError = false;
+    String? _healthDataErrorMessage;
+    bool _isLoadingPregnancyData = true;
 
-  MidwifeVisit(
-      {required this.week,
-      required this.bloodPressure,
-      required this.weight,
-      required this.fetalHeartRate});
-}
+    PregnancyData? _cachedPregnancyData;
+    bool hasPregnancyData = false;
+    String userName = '...';
 
-class _HomeScreenState extends State<HomeScreen> {
-  // Set initial state to show user doesn't have pregnancy data
-  bool hasPregnancyData = false;
+    List<HealthData> _healthChartData = [];
+    bool _isChartLoading = false;
+    String? _chartErrorMessage;
 
-  // Pregnancy data fields
-  String userName = "Hariadi";
-  DateTime? dueDate;
-  int pregnancyWeeks = 0;
-  int pregnancyDays = 0;
-  String trimester = "First trimester";
-  int totalPregnancyDays = 0;
+    // Data kehamilan
+    DateTime? dueDate;
+    int pregnancyWeeks = 0;
+    int pregnancyDays = 0;
+    String trimester = "First trimester";
+    int totalPregnancyDays = 0;
+    DateTime? startDate;
 
-  // User pregnancy history
-  int pregnancyCount = 0;
-  int childrenCount = 0;
-  int abortionCount = 0;
-  DateTime? firstDayOfPregnancy;
+    // Riwayat kehamilan
+    int gravida = 0;
+    int para = 0;
+    int abortus = 0;
 
-  // Mock health data
-  String weight = "58 kg";
-  String height = "165 cm";
-  String heartRate = "85 bpm";
-  String bloodPressure = "110/70";
+    @override
+    bool get wantKeepAlive => true;
 
-  @override
-  void initState() {
-    super.initState();
+    @override
+    void initState() {
+      super.initState();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadHealthData();
+        _loadPregnancyData();
+        _loadUserName();
+        _loadChartData();
+      });
+    }
 
-    // Due date will be calculated after registration
-  }
+    @override
+    void didChangeDependencies() {
+      super.didChangeDependencies();
+      _loadPregnancyData();
+    }
+
+    Future<void> _loadUserName() async {
+      final user =
+          await AuthController().getUser(); // Panggil dari SharedPreferences
+      if (user != null) {
+        setState(() {
+          userName = user.name;
+        });
+      }
+    }
+
+    Future<void> _loadPregnancyData() async {
+      try {
+        setState(() => _isLoadingPregnancyData = true);
+
+        // First check if we have cached data
+        if (_cachedPregnancyData != null) {
+          debugPrint('Using cached pregnancy data');
+          setState(() => hasPregnancyData = true);
+          return;
+        }
+
+        // Ambil data user yang login untuk mendapatkan userId
+        final user = await AuthController().getUser();
+        if (user == null || user.userId == null) {
+          debugPrint('No user data or userId found');
+          setState(() => hasPregnancyData = false);
+          return;
+        }
+
+        // Debug: Print userId untuk memastikan
+        debugPrint('Loading pregnancy data for userId: ${user.userId}');
+
+        // Ambil data kehamilan berdasarkan userId
+        final pregnancyData = await ApiService.getPregnancyData(user.userId!);
+
+        if (pregnancyData != null) {
+          debugPrint('Pregnancy data loaded successfully');
+
+          if (mounted) {
+            setState(() {
+              _cachedPregnancyData = pregnancyData;
+              hasPregnancyData = true;
+              totalPregnancyDays = pregnancyData.totalDays;
+              trimester = pregnancyData.trimester;
+            });
+          }
+        } else {
+          debugPrint('No pregnancy data found for userId: ${user.userId}');
+          if (mounted) {
+            setState(() {
+              hasPregnancyData = false;
+              _cachedPregnancyData = null; // Clear any stale data
+            });
+          }
+        }
+      } catch (error) {
+        debugPrint('Error loading pregnancy data: $error');
+        if (mounted) {
+          setState(() {
+            hasPregnancyData = false;
+            _cachedPregnancyData = null;
+          });
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoadingPregnancyData = false);
+        }
+      }
+    }
+
+    // Method untuk load data kesehatan dan cache
+    Future<void> _loadHealthData() async {
+      if (_cachedHealthData != null) return; // Jika sudah ada cache, skip
+
+      setState(() {
+        _isHealthDataLoading = true;
+        _hasHealthDataError = false;
+        _healthDataErrorMessage = null;
+      });
+
+      try {
+        final pregnancyController = PregnancyController(apiService: ApiService());
+        final healthData = await pregnancyController.getLatestHealthTracking();
+
+        if (mounted) {
+          setState(() {
+            _cachedHealthData = healthData;
+            _isHealthDataLoading = false;
+          });
+        }
+      } catch (error) {
+        if (mounted) {
+          setState(() {
+            _isHealthDataLoading = false;
+            _hasHealthDataError = true;
+            _healthDataErrorMessage = error.toString();
+          });
+        }
+      }
+    }
+
+    // Method untuk refresh data kesehatan
+    Future<void> _refreshHealthData() async {
+      setState(() {
+        _cachedHealthData = null;
+      });
+      await _loadHealthData();
+    }
+
+    Future<void> _loadChartData() async {
+      if (!mounted) return;
+
+      setState(() {
+        _isChartLoading = true;
+        _chartErrorMessage = null;
+      });
+
+      try {
+        final user = await AuthController().getUser();
+        if (user == null || user.userId == null) {
+          throw Exception('User not logged in');
+        }
+
+        final pregnancyController = PregnancyController(apiService: ApiService());
+        final chartData =
+            await pregnancyController.fetchHealthTrackingData(user.userId!);
+
+        if (mounted) {
+          setState(() {
+            _healthChartData = chartData;
+            _isChartLoading = false;
+          });
+        }
+      } catch (error) {
+        if (mounted) {
+          setState(() {
+            _isChartLoading = false;
+            _chartErrorMessage = error.toString();
+          });
+        }
+      }
+    }
+
+    Future<void> _openArticleDetail(BuildContext context, Content content) async {
+      if (content.url != null && content.url!.isNotEmpty) {
+        try {
+          if (await canLaunchUrl(Uri.parse(content.url!))) {
+            await launchUrl(
+              Uri.parse(content.url!),
+              mode: LaunchMode.externalApplication,
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Tidak dapat membuka tautan')),
+            );
+          }
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: ${e.toString()}')),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Artikel tidak memiliki tautan')),
+        );
+      }
+    }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
+    final contentProvider = Provider.of<ContentProvider>(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF8FDFF),
       extendBody: true,
       body: SingleChildScrollView(
         controller: widget.scrollController,
+        physics: BouncingScrollPhysics(),
         padding: const EdgeInsets.only(bottom: 80), // Add padding for navbar
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SizedBox(
-                height:
-                    MediaQuery.of(context).padding.top), // Status bar height
+            SizedBox(height: MediaQuery.of(context).padding.top),
             _buildHeader(),
             _buildPregnancyCard(),
             _buildPregnancyInfo(),
-            _buildHealthStats(),
+            _buildHealthStats(), // Sekarang menggunakan cached data
             _buildMidwifeVisitsChart(),
-            _buildArticlesSection(),
+            _buildArticlesSection(context, contentProvider),
           ],
         ),
       ),
@@ -283,8 +470,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: Color(0xFFB3EAF4),
                   ),
                 ),
-                const Text(
-                  "Rahmat",
+                Text(
+                  userName,
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -325,7 +512,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: Color(0xFF11B3CF),
                         ),
                       ),
                     ),
@@ -343,6 +530,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildPregnancyInfo() {
+    if (_isLoadingPregnancyData) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       padding: const EdgeInsets.all(20.0),
@@ -362,10 +553,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      child: hasPregnancyData
+      child: hasPregnancyData && _cachedPregnancyData != null
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Week and days indicator
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -374,7 +566,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    "$pregnancyWeeks weeks, $pregnancyDays days pregnant",
+                    _cachedPregnancyData!.currentWeekAndDay,
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -383,83 +575,24 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
+
+                // Due date information
                 Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFB2EBF2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.calendar_today_rounded,
-                        color: Color(0xFF006064),
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
+                    const Icon(Icons.calendar_today, color: Color(0xFF00838F)),
+                    const SizedBox(width: 8),
                     Text(
-                      trimester,
+                      'Due: ${DateFormat('dd MMM yyyy').format(_cachedPregnancyData!.dueDate)}',
                       style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 16,
                         color: Color(0xFF455A64),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFB2EBF2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.event,
-                        color: Color(0xFF006064),
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      dueDate != null
-                          ? "Due ${DateFormat('dd MMM').format(dueDate!)}"
-                          : "",
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF455A64),
-                      ),
-                    ),
-                    const Spacer(),
-                    TextButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(
-                        Icons.edit_outlined,
-                        size: 18,
-                        color: Color(0xFF0097A7),
-                      ),
-                      label: const Text(
-                        "Edit",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF0097A7),
-                        ),
-                      ),
-                      style: TextButton.styleFrom(
-                        backgroundColor: const Color(0xFFE0F7FA),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
+
+                // Progress bar with indicators
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -467,7 +600,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
-                          "Progress",
+                          "Pregnancy Progress",
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
@@ -475,7 +608,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         Text(
-                          "${(totalPregnancyDays / 280 * 100).toStringAsFixed(1)}%",
+                          "${(_cachedPregnancyData!.progressPercentage * 100).toStringAsFixed(1)}%",
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -487,27 +620,39 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 8),
                     Stack(
                       children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: LinearProgressIndicator(
-                            value: totalPregnancyDays /
-                                280, // Approximate total days in pregnancy
-                            minHeight: 16,
-                            backgroundColor: const Color(0xFFB2EBF2),
-                            valueColor: const AlwaysStoppedAnimation<Color>(
-                                Color(0xFF00ACC1)),
+                        // Background track
+                        Container(
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE0F7FA),
+                            borderRadius: BorderRadius.circular(6),
                           ),
                         ),
+                        // Progress indicator
+                        Container(
+                          height: 12,
+                          width: MediaQuery.of(context).size.width *
+                              _cachedPregnancyData!.progressPercentage,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF00ACC1), Color(0xFF00838F)],
+                            ),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                        // Trimester markers
                         Positioned(
-                          left: (totalPregnancyDays / 280) *
-                                  MediaQuery.of(context).size.width *
-                                  0.85 -
-                              10,
-                          top: 0,
-                          child: const Icon(
-                            Icons.child_care,
-                            size: 16,
-                            color: Colors.white,
+                          left: 0,
+                          right: 0,
+                          top: 14,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _buildTrimesterMarker("1st", 0),
+                              _buildTrimesterMarker("2nd", 0.33),
+                              _buildTrimesterMarker("3rd", 0.66),
+                              _buildTrimesterMarker("Due", 1.0),
+                            ],
                           ),
                         ),
                       ],
@@ -516,84 +661,105 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             )
-          : Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: SizedBox(
-                    height: 150,
-                    child: Lottie.asset('assets/lottie/family2.json'),
-                  ),
-                ),
-                Expanded(
-                  flex: 3,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        "Start New Journey",
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF00838F),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => PregnancyRegistrationScreen(
-                                onRegistrationComplete: (pregnancyData) {
-                                  setState(() {
-                                    hasPregnancyData = true;
-                                    userName = pregnancyData.fullName;
-                                    pregnancyCount =
-                                        pregnancyData.pregnancyCount;
-                                    childrenCount = pregnancyData.childrenCount;
-                                    abortionCount = pregnancyData.abortionCount;
-                                    firstDayOfPregnancy =
-                                        pregnancyData.firstDayOfPregnancy;
-                                    dueDate = pregnancyData.dueDate;
-                                    pregnancyWeeks = pregnancyData.currentWeeks;
-                                    pregnancyDays = pregnancyData.currentDays;
-                                    trimester = pregnancyData.trimester;
-                                    totalPregnancyDays =
-                                        pregnancyData.totalDays;
-                                  });
-                                },
-                              ),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          backgroundColor: const Color(0xFF00ACC1),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 32,
-                            vertical: 16,
-                          ),
-                          elevation: 3,
-                          shadowColor: const Color(0xFF00ACC1).withOpacity(0.4),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        child: const Text(
-                          "Start Now",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+          : _buildNoPregnancyDataUI(),
+    );
+  }
+
+  Widget _buildTrimesterMarker(String label, double position) {
+    return Transform.translate(
+      offset: Offset(-8 * (1 - position), 0),
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Color(0xFF00838F),
             ),
+          ),
+          Container(
+            width: 2,
+            height: 8,
+            color: const Color(0xFF00838F),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoPregnancyDataUI() {
+    return Row(
+      children: [
+        Expanded(
+          flex: 2,
+          child: SizedBox(
+            height: 150,
+            child: Lottie.asset('assets/lottie/family2.json'),
+          ),
+        ),
+        Expanded(
+          flex: 3,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                "Start New Journey",
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF00838F),
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PregnancyRegistrationScreen(
+                        onRegistrationComplete: (pregnancyData) async {
+                          // Store in shared preferences
+                          final prefs = await SharedPreferences.getInstance();
+                          prefs.setString('cachedPregnancyData',
+                              jsonEncode(pregnancyData.toApiJson()));
+
+                          if (mounted) {
+                            setState(() {
+                              hasPregnancyData = true;
+                              _cachedPregnancyData = pregnancyData;
+                            });
+                          }
+                        },
+                      ),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: const Color(0xFF00ACC1),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 16,
+                  ),
+                  elevation: 3,
+                  shadowColor: const Color(0xFF00ACC1).withOpacity(0.4),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+                child: const Text(
+                  "Start Now",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -605,66 +771,169 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                "Health Data",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Health Data",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: _refreshHealthData,
+                    icon: const Icon(
+                      Icons.refresh,
+                      color: Color(0xFF00838F),
+                      size: 20,
+                    ),
+                    tooltip: 'Refresh Data',
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
-              SizedBox(
-                height: 280, // Sesuaikan tinggi sesuai kebutuhan
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    return GridView.count(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: 2,
-                      childAspectRatio:
-                          (constraints.maxWidth / 2) / 120, // Dinamis
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      children: [
-                        _buildColoredStatItem(
-                          title: "Tekanan Darah",
-                          value: "120/80",
-                          unit: "mmHg",
-                          icon: Icons.monitor_heart_outlined,
-                          color: Colors.blue[400]!,
-                        ),
-                        _buildColoredStatItem(
-                          title: "Detak Jantung",
-                          value: "89",
-                          unit: "BPM",
-                          icon: Icons.favorite_outline,
-                          color: Colors.red[400]!,
-                        ),
-                        _buildColoredStatItem(
-                          title: "Berat Badan",
-                          value: "70.5",
-                          unit: "Kg",
-                          icon: Icons.scale_outlined,
-                          color: Colors.orange[400]!,
-                        ),
-                        _buildColoredStatItem(
-                          title: "Tinggi Badan",
-                          value: "165.6",
-                          unit: "Cm",
-                          icon: Icons.straighten_outlined,
-                          color: Colors.lightBlue[400]!,
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              )
+              _buildHealthContent(),
             ],
           ),
         ),
       ],
     );
+  }
+
+  Widget _buildHealthContent() {
+    if (_isHealthDataLoading) {
+      return const SizedBox(
+        height: 200,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Loading health data...'),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_hasHealthDataError) {
+      return SizedBox(
+        height: 200,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, color: Colors.red, size: 48),
+              SizedBox(height: 16),
+              Text(
+                'Error: ${_healthDataErrorMessage ?? 'Unknown error'}',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.red),
+              ),
+              SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _refreshHealthData,
+                child: Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Use MediaQuery to get screen width and determine layout
+    double screenWidth = MediaQuery.of(context).size.width;
+    int crossAxisCount = _getCrossAxisCount(screenWidth);
+    double childAspectRatio = _getChildAspectRatio(screenWidth);
+
+    // Use SizedBox with calculated height to prevent layout shifts
+    double gridHeight = _calculateGridHeight(crossAxisCount, screenWidth);
+
+    return SizedBox(
+      height: gridHeight,
+      child: GridView.count(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisCount: crossAxisCount,
+        childAspectRatio: childAspectRatio,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        children: [
+          _buildColoredStatItem(
+            title: "Tekanan Darah",
+            value: _cachedHealthData?.bloodPressure ?? '-/-',
+            unit: "mmHg",
+            icon: Icons.monitor_heart_outlined,
+            color: Colors.blue[400]!,
+          ),
+          _buildColoredStatItem(
+            title: "Detak Jantung",
+            value: _cachedHealthData?.heartRate?.toString() ?? '-',
+            unit: "BPM",
+            icon: Icons.favorite_outline,
+            color: Colors.red[400]!,
+          ),
+          _buildColoredStatItem(
+            title: "Berat Badan",
+            value: _cachedHealthData?.weight?.toString() ?? '-',
+            unit: "Kg",
+            icon: Icons.scale_outlined,
+            color: Colors.orange[400]!,
+          ),
+          _buildColoredStatItem(
+            title: "Tinggi Badan",
+            value: _cachedHealthData?.height?.toString() ?? '-',
+            unit: "Cm",
+            icon: Icons.straighten_outlined,
+            color: Colors.lightBlue[400]!,
+          ),
+        ],
+      ),
+    );
+  }
+
+// Helper method to determine cross axis count based on screen width
+  int _getCrossAxisCount(double screenWidth) {
+    if (screenWidth > 1200) {
+      return 4; // Very large screens (desktop)
+    } else if (screenWidth > 800) {
+      return 3; // Large screens (tablet landscape)
+    } else if (screenWidth > 600) {
+      return 2; // Medium screens (tablet portrait)
+    } else {
+      return 2; // Small screens (mobile)
+    }
+  }
+
+// Helper method to determine aspect ratio based on screen width
+  double _getChildAspectRatio(double screenWidth) {
+    if (screenWidth > 1200) {
+      return 1.6; // Very large screens
+    } else if (screenWidth > 800) {
+      return 1.5; // Large screens
+    } else if (screenWidth > 600) {
+      return 1.4; // Medium screens
+    } else {
+      return 1.3; // Small screens
+    }
+  }
+
+// Helper method to calculate grid height based on cross axis count and screen width
+  double _calculateGridHeight(int crossAxisCount, double screenWidth) {
+    // Calculate number of rows (4 items total)
+    int rows = (4 / crossAxisCount).ceil();
+
+    // Base item height calculation
+    double itemWidth = (screenWidth - 32 - (crossAxisCount - 1) * 12) /
+        crossAxisCount; // Screen width minus margins and spacing
+    double childAspectRatio = _getChildAspectRatio(screenWidth);
+    double itemHeight = itemWidth / childAspectRatio;
+
+    // Total height = (rows * item height) + ((rows - 1) * main axis spacing)
+    return (rows * itemHeight) + ((rows - 1) * 12);
   }
 
   Widget _buildColoredStatItem({
@@ -717,31 +986,38 @@ class _HomeScreenState extends State<HomeScreen> {
                     fontWeight: FontWeight.w500,
                     color: color,
                   ),
-                  overflow: TextOverflow.ellipsis, // Tambahkan ini
-                  maxLines: 1, // Batasi 1 baris
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 2, // Allow 2 lines for longer titles
                 ),
               ),
             ],
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+          const SizedBox(height: 8),
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
                 ),
-              ),
-              Text(
-                unit,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[700],
+                Text(
+                  unit,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[700],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -749,225 +1025,528 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildMidwifeVisitsChart() {
-    // Mock data for midwife visits
-    final List<MidwifeVisit> visits = [
-      MidwifeVisit(
-          week: 8, bloodPressure: 110, weight: 56.5, fetalHeartRate: 0),
-      MidwifeVisit(
-          week: 12, bloodPressure: 112, weight: 57.2, fetalHeartRate: 160),
-      MidwifeVisit(
-          week: 16, bloodPressure: 114, weight: 58.5, fetalHeartRate: 155),
-      MidwifeVisit(
-          week: 20, bloodPressure: 112, weight: 60.1, fetalHeartRate: 150),
-      MidwifeVisit(
-          week: 24, bloodPressure: 115, weight: 62.3, fetalHeartRate: 148),
-      MidwifeVisit(
-          week: 28, bloodPressure: 118, weight: 64.0, fetalHeartRate: 145),
-      MidwifeVisit(
-          week: 32, bloodPressure: 120, weight: 65.7, fetalHeartRate: 140),
-    ];
-
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(20.0),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 5,
-            offset: const Offset(0, 2),
+            color: Colors.grey.withOpacity(0.08),
+            spreadRadius: 0,
+            blurRadius: 20,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                "Midwife Appointments",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  // Navigate to detailed view of appointments
-                },
-                child: Text(
-                  "View All",
-                  style: TextStyle(
-                    color: Colors.pink[300],
-                    fontWeight: FontWeight.bold,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Grafik Kunjungan Bidan",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          "Pelacakan kesehatan mingguan",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 12),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.pink[50],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: TextButton(
+                      onPressed: _loadChartData,
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.refresh,
+                            size: 14,
+                            color: Colors.pink[400],
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            "Perbarui",
+                            style: TextStyle(
+                              color: Colors.pink[400],
+                              fontWeight: FontWeight.w600,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          const Text(
-            "Weekly progress tracking",
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
-            ),
-          ),
+          const SizedBox(height: 24),
+          _buildChartContent(),
           const SizedBox(height: 16),
-          SizedBox(
-            height: 200,
-            child: _buildLineChart(visits),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 16,
-            children: [
-              _buildChartLegend(Colors.pink[300]!, "Blood Pressure"),
-              _buildChartLegend(Colors.blue[400]!, "Weight"),
-              _buildChartLegend(Colors.green[400]!, "Fetal Heart Rate"),
-            ],
-          ),
+          _buildChartLegendSection(),
         ],
       ),
     );
   }
 
-  Widget _buildLineChart(List<MidwifeVisit> visits) {
-    final weeks = visits.map((v) => v.week.toDouble()).toList();
-    final bloodPressures =
-        visits.map((v) => v.bloodPressure.toDouble()).toList();
-    final weights = visits.map((v) => v.weight).toList();
-    final fetalRates = visits.map((v) => v.fetalHeartRate.toDouble()).toList();
+  Widget _buildChartContent() {
+    if (_isChartLoading) {
+      return Container(
+        height: 270,
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.pink),
+              ),
+              SizedBox(height: 12),
+              Text(
+                'Memuat data...',
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
-    final allYValues = [...bloodPressures, ...weights, ...fetalRates];
+    if (_chartErrorMessage != null) {
+      return Container(
+        height: 270,
+        decoration: BoxDecoration(
+          color: Colors.red[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.red[100]!),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                color: Colors.red[400],
+                size: 40,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Terjadi Kesalahan',
+                style: TextStyle(
+                  color: Colors.red[700],
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  '$_chartErrorMessage',
+                  style: TextStyle(
+                    color: Colors.red[600],
+                    fontSize: 12,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_healthChartData.isEmpty) {
+      return Container(
+        height: 270,
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.insert_chart_outlined,
+                color: Colors.grey[400],
+                size: 40,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Belum Ada Data',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  'Data kunjungan bidan akan muncul setelah pemeriksaan pertama',
+                  style: TextStyle(
+                    color: Colors.grey[500],
+                    fontSize: 12,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      height: 270,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: _buildLineChart(_healthChartData),
+    );
+  }
+
+  Widget _buildLineChart(List<HealthData> healthDataList) {
+    // Filter dan urutkan data berdasarkan minggu kehamilan
+    final filteredData =
+        healthDataList.where((data) => data.pregnancyweek != null).toList();
+    filteredData.sort((a, b) => a.pregnancyweek!.compareTo(b.pregnancyweek!));
+
+    if (filteredData.isEmpty) {
+      return const Center(child: Text('Tidak ada data untuk ditampilkan'));
+    }
+
+    // Siapkan data untuk chart
+    final weeks =
+        filteredData.map((data) => data.pregnancyweek!.toDouble()).toList();
+    final bloodPressures =
+        filteredData.map((data) => data.systolicBloodPressure).toList();
+    final weights = filteredData.map((data) => data.weight).toList();
+    final heartRates =
+        filteredData.map((data) => data.heartRate.toDouble()).toList();
+
+    // Hitung range untuk chart
     final minX = weeks.reduce((a, b) => a < b ? a : b);
     final maxX = weeks.reduce((a, b) => a > b ? a : b);
-    final minY = allYValues.reduce((a, b) => a < b ? a : b);
-    final maxY = allYValues.reduce((a, b) => a > b ? a : b);
+
+    // Hitung range Y yang lebih smart untuk setiap metrik
+    final allValues = <double>[];
+    allValues.addAll(bloodPressures);
+    allValues.addAll(weights);
+    allValues.addAll(heartRates);
+
+    final minY = allValues.reduce((a, b) => a < b ? a : b);
+    final maxY = allValues.reduce((a, b) => a > b ? a : b);
+    final padding = (maxY - minY) * 0.1; // 10% padding
 
     return LineChart(
       LineChartData(
         gridData: FlGridData(
           show: true,
           drawVerticalLine: true,
-          horizontalInterval: 20,
-          verticalInterval: 4,
-          getDrawingHorizontalLine: (value) => FlLine(
-            color: Colors.grey[300],
-            strokeWidth: 1,
-          ),
-          getDrawingVerticalLine: (value) => FlLine(
-            color: Colors.grey[300],
-            strokeWidth: 1,
-          ),
+          drawHorizontalLine: true,
+          getDrawingHorizontalLine: (value) {
+            return FlLine(
+              color: Colors.grey[300]!,
+              strokeWidth: 0.5,
+            );
+          },
+          getDrawingVerticalLine: (value) {
+            return FlLine(
+              color: Colors.grey[300]!,
+              strokeWidth: 0.5,
+            );
+          },
         ),
         titlesData: FlTitlesData(
           show: true,
-          rightTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          topTitles: AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
           bottomTitles: AxisTitles(
+            axisNameWidget: Transform.translate(
+              offset: Offset(0, -10), // Angkat teks ke atas
+              child: Text(
+                'Minggu Kehamilan',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black54,
+                ),
+              ),
+            ),
+            axisNameSize: 18, // Lebih kecil, jadi lebih rapat
+
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 30,
-              interval: (maxX - minX) / 5, // optional
-              getTitlesWidget: (value, meta) => Text(
-                'Week ${value.toInt()}',
-                style: const TextStyle(color: Colors.black87, fontSize: 10),
-              ),
+              reservedSize: 50,
+              interval: _calculateXInterval(minX, maxX),
+              getTitlesWidget: (value, meta) {
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    '${value.toInt()}',
+                    style: const TextStyle(
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 10,
+                      height: 1.2,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              interval: (maxY - minY) / 5, // optional
-              getTitlesWidget: (value, meta) => Text(
-                value.toInt().toString(),
-                style: const TextStyle(color: Colors.black87, fontSize: 10),
-              ),
-              reservedSize: 40,
+              reservedSize: 35,
+              interval: _calculateYInterval(minY - padding, maxY + padding),
+              getTitlesWidget: (value, meta) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: Text(
+                    value.toInt().toString(),
+                    style: const TextStyle(
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 10,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ),
         borderData: FlBorderData(
           show: true,
-          border: Border.all(color: Colors.grey[300]!),
+          border: Border.all(color: Colors.grey[300]!, width: 1),
         ),
-        minX: minX - 1,
-        maxX: maxX + 1,
-        minY: (minY - 10).clamp(0, minY),
-        maxY: maxY + 10,
+        minX: minX - 0.5,
+        maxX: maxX + 0.5,
+        minY: minY - padding,
+        maxY: maxY + padding,
         lineBarsData: [
-          // Blood Pressure Line
+          // Garis tekanan darah sistol
           LineChartBarData(
-            spots: visits
-                .map((v) =>
-                    FlSpot(v.week.toDouble(), v.bloodPressure.toDouble()))
+            spots: weeks
+                .asMap()
+                .entries
+                .map((e) => FlSpot(e.value, bloodPressures[e.key]))
                 .toList(),
             isCurved: true,
-            color: Colors.pink[300],
+            color: Colors.pink[400]!,
             barWidth: 3,
             isStrokeCapRound: true,
             dotData: FlDotData(
               show: true,
-              getDotPainter: (spot, percent, barData, index) =>
-                  FlDotCirclePainter(
-                radius: 4,
-                color: Colors.pink[300]!,
-                strokeWidth: 2,
-                strokeColor: Colors.white,
-              ),
+              getDotPainter: (spot, percent, barData, index) {
+                return FlDotCirclePainter(
+                  radius: 4,
+                  color: Colors.pink[400]!,
+                  strokeWidth: 2,
+                  strokeColor: Colors.white,
+                );
+              },
             ),
-            belowBarData: BarAreaData(show: false),
-          ),
-          // Weight Line
-          LineChartBarData(
-            spots:
-                visits.map((v) => FlSpot(v.week.toDouble(), v.weight)).toList(),
-            isCurved: true,
-            color: Colors.blue[400],
-            barWidth: 3,
-            isStrokeCapRound: true,
-            dotData: FlDotData(
+            belowBarData: BarAreaData(
               show: true,
-              getDotPainter: (spot, percent, barData, index) =>
-                  FlDotCirclePainter(
-                radius: 4,
-                color: Colors.blue[400]!,
-                strokeWidth: 2,
-                strokeColor: Colors.white,
-              ),
+              color: Colors.pink[400]!.withOpacity(0.1),
             ),
-            belowBarData: BarAreaData(show: false),
           ),
-          // Fetal Heart Rate Line
+          // Garis berat badan
           LineChartBarData(
-            spots: visits
-                .map((v) =>
-                    FlSpot(v.week.toDouble(), v.fetalHeartRate.toDouble()))
+            spots: weeks
+                .asMap()
+                .entries
+                .map((e) => FlSpot(e.value, weights[e.key]))
                 .toList(),
             isCurved: true,
-            color: Colors.green[400],
+            color: Colors.blue[500]!,
             barWidth: 3,
             isStrokeCapRound: true,
             dotData: FlDotData(
               show: true,
-              getDotPainter: (spot, percent, barData, index) =>
-                  FlDotCirclePainter(
-                radius: 4,
-                color: Colors.green[400]!,
-                strokeWidth: 2,
-                strokeColor: Colors.white,
-              ),
+              getDotPainter: (spot, percent, barData, index) {
+                return FlDotCirclePainter(
+                  radius: 4,
+                  color: Colors.blue[500]!,
+                  strokeWidth: 2,
+                  strokeColor: Colors.white,
+                );
+              },
             ),
-            belowBarData: BarAreaData(show: false),
+            belowBarData: BarAreaData(
+              show: true,
+              color: Colors.blue[500]!.withOpacity(0.1),
+            ),
+          ),
+          // Garis detak jantung
+          LineChartBarData(
+            spots: weeks
+                .asMap()
+                .entries
+                .map((e) => FlSpot(e.value, heartRates[e.key]))
+                .toList(),
+            isCurved: true,
+            color: Colors.green[500]!,
+            barWidth: 3,
+            isStrokeCapRound: true,
+            dotData: FlDotData(
+              show: true,
+              getDotPainter: (spot, percent, barData, index) {
+                return FlDotCirclePainter(
+                  radius: 4,
+                  color: Colors.green[500]!,
+                  strokeWidth: 2,
+                  strokeColor: Colors.white,
+                );
+              },
+            ),
+            belowBarData: BarAreaData(
+              show: true,
+              color: Colors.green[500]!.withOpacity(0.1),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+// Helper function untuk menghitung interval yang tepat
+  double _calculateXInterval(double min, double max) {
+    final range = max - min;
+    if (range <= 5) return 1;
+    if (range <= 10) return 2;
+    if (range <= 20) return 4;
+    return (range / 5).ceilToDouble();
+  }
+
+  double _calculateYInterval(double min, double max) {
+    final range = max - min;
+    if (range <= 10) return 2;
+    if (range <= 50) return 10;
+    if (range <= 100) return 20;
+    return (range / 5).ceilToDouble();
+  }
+
+  Widget _buildChartLegendSection() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Keterangan:',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _buildChartLegend(
+                  Colors.pink[400]!,
+                  'Tekanan\nDarah',
+                ),
+              ),
+              Expanded(
+                child: _buildChartLegend(
+                  Colors.blue[500]!,
+                  'Berat\nBadan',
+                ),
+              ),
+              Expanded(
+                child: _buildChartLegend(
+                  Colors.green[500]!,
+                  'Detak\nJantung',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.blue[50],
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.blue[100]!),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  color: Colors.blue[600],
+                  size: 14,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Grafik menunjukkan perkembangan kesehatan per minggu kehamilan. '
+                    'Konsultasikan dengan bidan jika ada perubahan signifikan.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.blue[700],
+                      height: 1.3,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -975,75 +1554,67 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildChartLegend(Color color, String label) {
-    return Row(
+    return Column(
       children: [
         Container(
-          width: 12,
-          height: 12,
+          width: 14,
+          height: 14,
           decoration: BoxDecoration(
             color: color,
             shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: color.withOpacity(0.3),
+                spreadRadius: 0,
+                blurRadius: 3,
+                offset: const Offset(0, 1),
+              ),
+            ],
           ),
         ),
-        const SizedBox(width: 4),
+        const SizedBox(height: 6),
         Text(
           label,
           style: const TextStyle(
-            fontSize: 12,
+            fontSize: 10,
             color: Colors.black87,
+            fontWeight: FontWeight.w500,
           ),
+          textAlign: TextAlign.center,
         ),
       ],
     );
   }
 
-  Widget _buildInfoBox({
-    required String title,
-    required String value,
-    required Color color,
-  }) {
-    return Expanded(
-      child: Container(
-        margin: EdgeInsets.symmetric(horizontal: 4),
-        padding: EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.4)),
-        ),
-        child: Column(
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: color,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 4),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget _buildArticlesSection(
+      BuildContext context, ContentProvider contentProvider) {
+    // Fetch data when widget is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (contentProvider.contents.isEmpty && !contentProvider.isLoading) {
+        contentProvider.fetchLatestContent();
+      }
+    });
 
-  Widget _buildArticlesSection() {
-    final List<Map<String, String>> articles = [
-      {'title': 'Healthy eating during pregnancy'},
-      {'title': 'Pregnancy exercise basics'},
-      {'title': 'Understanding fetal development'},
-    ];
+    if (contentProvider.isLoading && contentProvider.contents.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16.0),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (contentProvider.error.isNotEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
+        child: Text(
+          'Failed to load articles: ${contentProvider.error}',
+          style: const TextStyle(color: Colors.red),
+        ),
+      );
+    }
+
+    if (contentProvider.contents.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 16.0),
@@ -1053,7 +1624,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(
-              "Featured Articles",
+              "Rekomendasi Konten",
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -1062,14 +1633,18 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 12),
           SizedBox(
-            height: 200,
+            height: 210,
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               scrollDirection: Axis.horizontal,
-              itemCount: articles.length,
+              itemCount: contentProvider.contents.length,
               itemBuilder: (context, index) {
+                final content = contentProvider.contents[index];
                 return _buildArticleCard(
-                  title: articles[index]['title']!,
+                  title: content.title,
+                  thumbnail: content.thumbnail,
+                  url: content.url,
+                  onTap: () => _openArticleDetail(context, content),
                 );
               },
             ),
@@ -1079,42 +1654,106 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildArticleCard({required String title}) {
-    return Container(
-      width: 220,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      child: Card(
-        color: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        elevation: 2,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
+    Widget _buildArticleCard({
+    required String title,
+    String? thumbnail,
+    String? url,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 230,
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        child: Card(
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 1,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Thumbnail image with play icon overlay
               Container(
-                height: 120,
+                height: 140,
                 width: double.infinity,
-                color: Colors.blue,
-                child: const Center(
-                  child: Icon(Icons.image, color: Colors.white, size: 40),
+                decoration: BoxDecoration(
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(12)),
+                  color: const Color(0xFF11B3CF),
+                ),
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: thumbnail != null
+                          ? ClipRRect(
+                              borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(12)),
+                              child: Image.network(
+                                thumbnail,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Center(
+                                    child: Icon(Icons.play_arrow,
+                                        color: Colors.white, size: 40),
+                                  );
+                                },
+                              ),
+                            )
+                          : const Center(
+                              child: Icon(Icons.play_arrow,
+                                  color: Colors.white, size: 40),
+                            ),
+                    ),
+                    // Play icon overlay
+                    Center(
+                      child: Icon(Icons.play_circle_fill,
+                          color: Colors.black.withOpacity(0.6), size: 48),
+                    ),
+                  ],
                 ),
               ),
+              // Video content (title + optional url)
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black,
-                  ),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: true,
+                      textAlign: TextAlign.start,
+                    ),
+                    if (url != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6.0),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.link, size: 14, color: Colors.grey),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                Uri.parse(url).host,
+                                style: const TextStyle(
+                                  fontSize: 9,
+                                  color: Colors.grey,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ],
@@ -1123,27 +1762,4 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-}
-
-class CirclePatternPainter extends CustomPainter {
-  final Color color;
-
-  CirclePatternPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-
-    canvas.drawCircle(
-        Offset(size.width * 0.8, size.height * 0.3), size.width * 0.15, paint);
-
-    canvas.drawCircle(
-        Offset(size.width * 0.2, size.height * 0.7), size.width * 0.1, paint);
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

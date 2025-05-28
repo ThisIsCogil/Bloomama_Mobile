@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
-// For filename consistency, save this file as 'registration_screen.dart'
+import '../../../services/api_service.dart';
+import '../../../models/user_pregnancy.dart';
+import '../../../controllers/pregnancy_controller.dart';
 
 class PregnancyRegistrationScreen extends StatefulWidget {
   final Function(PregnancyData) onRegistrationComplete;
@@ -15,85 +16,17 @@ class PregnancyRegistrationScreen extends StatefulWidget {
   State<PregnancyRegistrationScreen> createState() => _PregnancyRegistrationScreenState();
 }
 
-class PregnancyData {
-  final String fullName;
-  final int pregnancyCount;
-  final int childrenCount;
-  final int abortionCount;
-  final DateTime firstDayOfPregnancy;
-  
-  // Calculated fields
-  final DateTime dueDate;
-  final int currentWeeks;
-  final int currentDays;
-  final String trimester;
-  final int totalDays;
-
-  PregnancyData({
-    required this.fullName,
-    required this.pregnancyCount,
-    required this.childrenCount,
-    required this.abortionCount,
-    required this.firstDayOfPregnancy,
-    required this.dueDate,
-    required this.currentWeeks,
-    required this.currentDays,
-    required this.trimester,
-    required this.totalDays,
-  });
-
-  // Factory method to create the pregnancy data and calculate dates
-  factory PregnancyData.calculate({
-    required String fullName,
-    required int pregnancyCount,
-    required int childrenCount,
-    required int abortionCount,
-    required DateTime firstDayOfPregnancy,
-  }) {
-    // Calculate due date (280 days or 40 weeks from first day)
-    final dueDate = firstDayOfPregnancy.add(const Duration(days: 280));
-    
-    // Calculate current pregnancy progress
-    final today = DateTime.now();
-    final differenceInDays = today.difference(firstDayOfPregnancy).inDays;
-    
-    // Calculate weeks and remaining days
-    final currentWeeks = differenceInDays ~/ 7;
-    final currentDays = differenceInDays % 7;
-    
-    // Determine trimester
-    String trimester;
-    if (currentWeeks < 13) {
-      trimester = "First trimester";
-    } else if (currentWeeks < 27) {
-      trimester = "Second trimester";
-    } else {
-      trimester = "Third trimester";
-    }
-
-    return PregnancyData(
-      fullName: fullName,
-      pregnancyCount: pregnancyCount,
-      childrenCount: childrenCount,
-      abortionCount: abortionCount,
-      firstDayOfPregnancy: firstDayOfPregnancy,
-      dueDate: dueDate,
-      currentWeeks: currentWeeks,
-      currentDays: currentDays, 
-      trimester: trimester,
-      totalDays: differenceInDays,
-    );
-  }
-}
 
 class _PregnancyRegistrationScreenState extends State<PregnancyRegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _pregnancyController = PregnancyController(apiService: ApiService());
   
-  int _pregnancyCount = 1;
-  int _childrenCount = 0;
-  int _abortionCount = 0;
-  DateTime _selectedDate = DateTime.now(); // Default to today's date
+  int _gravida = 1;    // Changed from _pregnancyCount
+  int _para = 0;        // Changed from _childrenCount
+  int _abortus = 0;     // Changed from _abortionCount
+  DateTime _selectedDate = DateTime.now();
+  bool _isSubmitting = false;
   
   @override
   void dispose() {
@@ -101,29 +34,28 @@ class _PregnancyRegistrationScreenState extends State<PregnancyRegistrationScree
     super.dispose();
   }
 
-  void _submitForm() {
-    if (_formKey.currentState!.validate()) {
-      // Create and calculate pregnancy data
-      final pregnancyData = PregnancyData.calculate(
-        fullName: _nameController.text.trim(),
-        pregnancyCount: _pregnancyCount,
-        childrenCount: _childrenCount,
-        abortionCount: _abortionCount,
-        firstDayOfPregnancy: _selectedDate,
-      );
-      
-      // Call the callback function with the calculated data
-      widget.onRegistrationComplete(pregnancyData);
-      
-      // Navigate back
-      Navigator.pop(context);
-    }
+void _submitForm() async {
+  if (_formKey.currentState!.validate()) {
+    await _pregnancyController.registerPregnancy(
+      context: context,
+      fullName: _nameController.text.trim(),
+      gravida: _gravida,
+      para: _para,
+      abortus: _abortus,
+      startDate: _selectedDate,
+      onSuccess: (pregnancyData) {
+        widget.onRegistrationComplete(pregnancyData);
+        Navigator.pop(context); 
+      },
+    );
   }
+}
+
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(), // Always use today's date as initialDate when opening picker
+      initialDate: DateTime.now(),
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
       helpText: 'SELECT FIRST DAY OF PREGNANCY',
@@ -154,7 +86,7 @@ class _PregnancyRegistrationScreenState extends State<PregnancyRegistrationScree
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pregnancy Registration'),
+        title: const Text('Registrasi Kehamilan'),
         backgroundColor: const Color(0xFF10B2CF),
         foregroundColor: Colors.white,
       ),
@@ -163,32 +95,13 @@ class _PregnancyRegistrationScreenState extends State<PregnancyRegistrationScree
         child: ListView(
           padding: const EdgeInsets.all(16.0),
           children: [ 
-            // Full Name
-            TextFormField(
-              controller: _nameController,
-              decoration: InputDecoration(
-                labelText: 'Full Name',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                prefixIcon: const Icon(Icons.person_outline),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your name';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 20),
-            
-            // Pregnancy Count
+            // Gravida (Pregnancy Count)
             Row(
               children: [
                 const Expanded(
                   flex: 2,
                   child: Text(
-                    'Number of Pregnancies:',
+                    'Jumlah Kehamilan:',
                     style: TextStyle(fontSize: 16),
                   ),
                 ),
@@ -204,17 +117,17 @@ class _PregnancyRegistrationScreenState extends State<PregnancyRegistrationScree
                       children: [
                         IconButton(
                           icon: const Icon(Icons.remove),
-                          onPressed: _pregnancyCount > 1
-                              ? () => setState(() => _pregnancyCount--)
+                          onPressed: _gravida > 1
+                              ? () => setState(() => _gravida--)
                               : null,
                         ),
                         Text(
-                          '$_pregnancyCount',
+                          '$_gravida',
                           style: const TextStyle(fontSize: 16),
                         ),
                         IconButton(
                           icon: const Icon(Icons.add),
-                          onPressed: () => setState(() => _pregnancyCount++),
+                          onPressed: () => setState(() => _gravida++),
                         ),
                       ],
                     ),
@@ -224,13 +137,13 @@ class _PregnancyRegistrationScreenState extends State<PregnancyRegistrationScree
             ),
             const SizedBox(height: 20),
             
-            // Children Count
+            // Para (Children Count)
             Row(
               children: [
                 const Expanded(
                   flex: 2,
                   child: Text(
-                    'Number of Children:',
+                    'Jumlah Anak:',
                     style: TextStyle(fontSize: 16),
                   ),
                 ),
@@ -246,17 +159,17 @@ class _PregnancyRegistrationScreenState extends State<PregnancyRegistrationScree
                       children: [
                         IconButton(
                           icon: const Icon(Icons.remove),
-                          onPressed: _childrenCount > 0
-                              ? () => setState(() => _childrenCount--)
+                          onPressed: _para > 0
+                              ? () => setState(() => _para--)
                               : null,
                         ),
                         Text(
-                          '$_childrenCount',
+                          '$_para',
                           style: const TextStyle(fontSize: 16),
                         ),
                         IconButton(
                           icon: const Icon(Icons.add),
-                          onPressed: () => setState(() => _childrenCount++),
+                          onPressed: () => setState(() => _para++),
                         ),
                       ],
                     ),
@@ -266,13 +179,13 @@ class _PregnancyRegistrationScreenState extends State<PregnancyRegistrationScree
             ),
             const SizedBox(height: 20),
             
-            // Abortion Count
+            // Abortus (Abortion Count)
             Row(
               children: [
                 const Expanded(
                   flex: 2,
                   child: Text(
-                    'Number of Abortions:',
+                    'Jumlah Aborsi:',
                     style: TextStyle(fontSize: 16),
                   ),
                 ),
@@ -288,17 +201,17 @@ class _PregnancyRegistrationScreenState extends State<PregnancyRegistrationScree
                       children: [
                         IconButton(
                           icon: const Icon(Icons.remove),
-                          onPressed: _abortionCount > 0
-                              ? () => setState(() => _abortionCount--)
+                          onPressed: _abortus > 0
+                              ? () => setState(() => _abortus--)
                               : null,
                         ),
                         Text(
-                          '$_abortionCount',
+                          '$_abortus',
                           style: const TextStyle(fontSize: 16),
                         ),
                         IconButton(
                           icon: const Icon(Icons.add),
-                          onPressed: () => setState(() => _abortionCount++),
+                          onPressed: () => setState(() => _abortus++),
                         ),
                       ],
                     ),
@@ -308,7 +221,7 @@ class _PregnancyRegistrationScreenState extends State<PregnancyRegistrationScree
             ),
             const SizedBox(height: 20),
             
-            // First Day of Pregnancy
+            // Start Date of Pregnancy
             GestureDetector(
               onTap: () => _selectDate(context),
               child: Container(
@@ -325,7 +238,7 @@ class _PregnancyRegistrationScreenState extends State<PregnancyRegistrationScree
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'First Day of Pregnancy',
+                          'Hari Pertama Kehamilan',
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.grey,
@@ -347,52 +260,50 @@ class _PregnancyRegistrationScreenState extends State<PregnancyRegistrationScree
             ),
             const SizedBox(height: 20),
             
-            // Preview of due date based on selected date
-           Container(
-  padding: const EdgeInsets.all(16),
-  decoration: BoxDecoration(
-    color: Colors.blue[50],
-    borderRadius: BorderRadius.circular(12),
-  ),
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const Text(
-        'Based on this date:',
-        style: TextStyle(
-          fontSize: 12, // Ukuran font lebih kecil
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-      const SizedBox(height: 8),
-      Row(
-        children: [
-          const Text(
-            'Estimated Due Date: ',
-            style: TextStyle(
-              fontSize: 14, // Ukuran font lebih kecil
+            // Due Date Preview
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Berdasarkan Tanggal Ini:',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Text(
+                        'Perkiraan Bayi Lahir Adalah: ',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                    
+                      Text(
+                        DateFormat('dd MMM yyyy').format(
+                          _selectedDate.add(const Duration(days: 280)),),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF10B2CF),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          Text(
-            DateFormat('dd MMM yyyy').format(
-              _selectedDate.add(const Duration(days: 280)),
-            ),
-            style: const TextStyle(
-              fontSize: 14, // Ukuran font lebih kecil
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF10B2CF),
-            ),
-          ),
-        ],
-      ),
-    ],
-  ),
-),
             const SizedBox(height: 32),
             
             // Submit Button
             ElevatedButton(
-              onPressed: _submitForm,
+              onPressed: _isSubmitting ? null : _submitForm,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF10B2CF),
                 foregroundColor: Colors.white,
@@ -401,13 +312,15 @@ class _PregnancyRegistrationScreenState extends State<PregnancyRegistrationScree
                   borderRadius: BorderRadius.circular(30),
                 ),
               ),
-              child: const Text(
-                'Register',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              child: _isSubmitting
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text(
+                      'Daftar',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
             ),
           ],
         ),

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:login/controllers/kesehatan_controller.dart';
+import 'package:login/services/api_service.dart';
+import '../../../models/health_model.dart';
+import 'tips_trik_tab.dart';
 
 class PregnancyTrackerScreen extends StatefulWidget {
   final ScrollController scrollController;
@@ -12,8 +16,11 @@ class PregnancyTrackerScreen extends StatefulWidget {
 }
 
 class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
-  int _selectedWeek = 19;
+  final KesehatanController _kesehatanController = KesehatanController(apiService: ApiService(),);
+  int _selectedWeek = 1;
   bool isSearching = false;
+  HealthData? _currentWeekHealthData;
+  bool _isLoadingHealthData = false;
 
   final Map<String, bool> _imageExistsCache = {};
 
@@ -24,10 +31,6 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
       'description':
           'Conception has just occurred! The fertilized egg is dividing rapidly as it travels down the fallopian tube toward the uterus.',
       'emoji': '🌱',
-      'bp': '110/70',
-      'weight': '50 kg',
-      'height': '60 cm',
-      'heartRate': '23 bpm',
       'notes': 'Semua normal, lanjutkan makan bergizi.',
     },
     2: {
@@ -305,234 +308,37 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
     },
   };
 
-  Widget _buildTabButton(String title, {required bool isSelected}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Column(
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              color: isSelected ? Colors.cyan : Colors.grey,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-          SizedBox(height: 6),
-          if (isSelected)
-            Container(
-              height: 3,
-              width: 80,
-              decoration: BoxDecoration(
-                color: Colors.cyan,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-        ],
-      ),
-    );
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchHealthDataForWeek(_selectedWeek);
+    });
   }
 
-  Widget _buildCategoryButton(String title) {
-    return Container(
-      height: 32,
-      child: OutlinedButton(
-        onPressed: () {},
-        child: Text(
-          title,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        style: OutlinedButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          padding: EdgeInsets.symmetric(horizontal: 12),
-          side: BorderSide(color: Colors.grey.shade300),
-        ),
-      ),
-    );
-  }
+  void _fetchHealthDataForWeek(int week) async {
+    if (!mounted) return;
 
-  Widget _buildFeaturedVideoItem() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          height: 180,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.blue,
-            borderRadius: BorderRadius.circular(8),
-            image: DecorationImage(
-              image: AssetImage('assets/profile_image.jpg'),
-              fit: BoxFit.cover,
-            ),
-          ),
-        ),
-        SizedBox(height: 8),
-        Row(
-          children: [
-            CircleAvatar(
-              radius: 16,
-              backgroundImage: AssetImage('assets/profile_image.jpg'),
-            ),
-            SizedBox(width: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Video Title Here",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14, // Ukuran font lebih kecil
-                  ),
-                ),
-                Wrap(
-                  spacing: 4,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Text(
-                      "Channel Name",
-                      style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12), // Ukuran font lebih kecil
-                    ),
-                    Icon(Icons.check_circle, size: 12, color: Colors.grey),
-                    Text(
-                      "12M views • 1 week ago",
-                      style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12), // Ukuran font lebih kecil
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
-        ),
-      ],
-    );
-  }
+    setState(() {
+      _isLoadingHealthData = true;
+    });
 
-  Widget _buildHistoryVideoItem() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          height: 60,
-          width: 100,
-          decoration: BoxDecoration(
-            color: Colors.blue,
-            borderRadius: BorderRadius.circular(4),
-            image: DecorationImage(
-              image: AssetImage('assets/profile_image.jpg'),
-              fit: BoxFit.cover,
-            ),
-          ),
-        ),
-        SizedBox(height: 4),
-        SizedBox(
-          width: 100,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Video Title Here",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              Text(
-                "Channel Name",
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 10,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
+    try {
+      final healthData =
+          await _kesehatanController.getHealthTrackingByWeek(week);
+      if (!mounted) return;
 
-  Widget _buildVideoListItem() {
-    return Container(
-      padding: EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            height: 70,
-            width: 120,
-            decoration: BoxDecoration(
-              color: Colors.blue,
-              borderRadius: BorderRadius.circular(6),
-              image: DecorationImage(
-                image: AssetImage('assets/profile_image.jpg'),
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Video Title Here",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: 4),
-                Row(
-                  children: [
-                    Text(
-                      "Channel Name",
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 14,
-                      ),
-                    ),
-                    SizedBox(width: 4),
-                    Icon(Icons.check_circle, size: 14, color: Colors.grey),
-                  ],
-                ),
-                SizedBox(height: 4),
-                Text(
-                  "12M views • 1 week ago",
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+      setState(() {
+        _currentWeekHealthData = healthData;
+      });
+    } catch (e) {
+      print('Error fetching health data: $e');
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingHealthData = false;
+      });
+    }
   }
 
   Widget _getBabyImage() {
@@ -585,7 +391,7 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
     if (_imageExistsCache.containsKey(assetPath)) {
       return _imageExistsCache[assetPath]!;
     }
-    
+
     try {
       await rootBundle.load(assetPath);
       _imageExistsCache[assetPath] = true;
@@ -597,23 +403,13 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
     }
   }
 
-  // Existing helper method (can be removed since we have the new one above)
-  Future<bool> _checkImageExists(String assetPath) async {
-    try {
-      await rootBundle.load(assetPath);
-      return true;
-    } catch (e) {
-      debugPrint('Image not found: $assetPath');
-      return false;
-    }
-  }
-  
   // Make sure to override dispose to clean up resources if needed
   @override
   void dispose() {
     _imageExistsCache.clear();
     super.dispose();
   }
+
   Widget _buildColoredStatItem({
     required String title,
     required String value,
@@ -664,31 +460,38 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
                     fontWeight: FontWeight.w500,
                     color: color,
                   ),
-                  overflow: TextOverflow.ellipsis, // Tambahkan ini
-                  maxLines: 1, // Batasi 1 baris
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 2, // Allow 2 lines for longer titles
                 ),
               ),
             ],
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+          const SizedBox(height: 8),
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
                 ),
-              ),
-              Text(
-                unit,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[700],
+                Text(
+                  unit,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[700],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -737,7 +540,7 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
                           GestureDetector(
                             onTap: () {
                               setState(() {
-                                isSearching = false;
+                                isSearching = false; // Only close search
                               });
                             },
                             child: Icon(Icons.close,
@@ -768,9 +571,7 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
                                 child: Icon(Icons.search,
                                     size: 28, color: Colors.black54),
                               ),
-                              SizedBox(width: 16),
-                              Icon(Icons.bookmark_border,
-                                  size: 28, color: Colors.black54),
+                              
                             ],
                           ),
                         ],
@@ -816,6 +617,7 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
                   // First Tab - Minggu Si-Bayi
                   SingleChildScrollView(
                     controller: widget.scrollController,
+                    physics: BouncingScrollPhysics(),
                     padding: EdgeInsets.only(bottom: 100),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -837,6 +639,7 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
                                       setState(() {
                                         _selectedWeek = weekNum;
                                       });
+                                      _fetchHealthDataForWeek(weekNum);
                                     },
                                     child: Container(
                                       width: 40,
@@ -948,67 +751,91 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Container(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          "Data Appointment",
-                                          style: TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        LayoutBuilder(
-                                          builder: (context, constraints) {
-                                            return GridView.count(
-                                              shrinkWrap: true,
-                                              physics:const NeverScrollableScrollPhysics(), 
-                                              crossAxisCount: 2,
-                                              childAspectRatio:
-                                                  (constraints.maxWidth / 2) /
-                                                      120, // Dinamis
-                                              mainAxisSpacing: 12,
-                                              crossAxisSpacing: 12,
-                                              children: [
-                                                _buildColoredStatItem(
-                                                  title: "Tekanan Darah",
-                                                  value: "120/80",
-                                                  unit: "mmHg",
-                                                  icon: Icons
-                                                      .monitor_heart_outlined,
-                                                  color: Colors.blue[400]!,
-                                                ),
-                                                _buildColoredStatItem(
-                                                  title: "Detak Jantung",
-                                                  value: "89",
-                                                  unit: "BPM",
-                                                  icon: Icons.favorite_outline,
-                                                  color: Colors.red[400]!,
-                                                ),
-                                                _buildColoredStatItem(
-                                                  title: "Berat Badan",
-                                                  value: "70.5",
-                                                  unit: "Kg",
-                                                  icon: Icons.scale_outlined,
-                                                  color: Colors.orange[400]!,
-                                                ),
-                                                _buildColoredStatItem(
-                                                  title: "Tinggi Badan",
-                                                  value: "165.6",
-                                                  unit: "Cm",
-                                                  icon:
-                                                      Icons.straighten_outlined,
-                                                  color: Colors.lightBlue[400]!,
-                                                ),
-                                              ],
-                                            );
-                                          },
-                                        ),
-                                      ],
+                                  Text(
+                                    "Data Appointment",
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
+                                  SizedBox(height: 20),
+                                  Builder(
+                                    builder: (context) {
+                                      double screenWidth =
+                                          MediaQuery.of(context).size.width;
+                                      int crossAxisCount =
+                                          _getCrossAxisCount(screenWidth);
+                                      double childAspectRatio =
+                                          _getChildAspectRatio(screenWidth);
+                                      double gridHeight = _calculateGridHeight(
+                                          crossAxisCount, screenWidth);
+                                      return SizedBox(
+                                        height: gridHeight,
+                                        child: _isLoadingHealthData
+                                            ? Center(
+                                                child:
+                                                    CircularProgressIndicator())
+                                            : GridView.count(
+                                                shrinkWrap: true,
+                                                physics:
+                                                    const NeverScrollableScrollPhysics(),
+                                                crossAxisCount: crossAxisCount,
+                                                childAspectRatio:
+                                                    childAspectRatio,
+                                                mainAxisSpacing: 12,
+                                                crossAxisSpacing: 12,
+                                                children: [
+                                                  _buildColoredStatItem(
+                                                    title: "Tekanan Darah",
+                                                    value: _currentWeekHealthData
+                                                            ?.bloodPressure ??
+                                                        "-/-",
+                                                    unit: "mmHg",
+                                                    icon: Icons
+                                                        .monitor_heart_outlined,
+                                                    color: Colors.blue[400]!,
+                                                  ),
+                                                  _buildColoredStatItem(
+                                                    title: "Detak Jantung",
+                                                    value:
+                                                        _currentWeekHealthData
+                                                                ?.heartRate
+                                                                ?.toString() ??
+                                                            "-",
+                                                    unit: "BPM",
+                                                    icon:
+                                                        Icons.favorite_outline,
+                                                    color: Colors.red[400]!,
+                                                  ),
+                                                  _buildColoredStatItem(
+                                                    title: "Berat Badan",
+                                                    value: _currentWeekHealthData
+                                                            ?.weight
+                                                            ?.toStringAsFixed(
+                                                                1) ??
+                                                        "-",
+                                                    unit: "Kg",
+                                                    icon: Icons.scale_outlined,
+                                                    color: Colors.orange[400]!,
+                                                  ),
+                                                  _buildColoredStatItem(
+                                                    title: "Tinggi Badan",
+                                                    value: _currentWeekHealthData
+                                                            ?.height
+                                                            ?.toStringAsFixed(
+                                                                1) ??
+                                                        "-",
+                                                    unit: "Cm",
+                                                    icon: Icons
+                                                        .straighten_outlined,
+                                                    color:
+                                                        Colors.lightBlue[400]!,
+                                                  ),
+                                                ],
+                                              ),
+                                      );
+                                    },
+                                  )
                                 ],
                               ),
                               SizedBox(height: 30),
@@ -1031,7 +858,8 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
                                       Border.all(color: Colors.grey.shade300),
                                 ),
                                 child: Text(
-                                  _weekData[_selectedWeek]?['notes'] ??
+                                  _currentWeekHealthData?.notes ??
+                                      _weekData[_selectedWeek]?['notes'] ??
                                       "Belum ada catatan.",
                                   style: TextStyle(
                                     fontSize: 16,
@@ -1047,108 +875,8 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
                       ],
                     ),
                   ),
-
                   // Second Tab - Tips & Trik
-                  SingleChildScrollView(
-                    controller: widget.scrollController,
-                    padding: EdgeInsets.only(bottom: 100),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Category buttons
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 12.0, horizontal: 16.0),
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                _buildCategoryButton("Olahraga"),
-                                SizedBox(width: 8),
-                                _buildCategoryButton("Nutrisi"),
-                                SizedBox(width: 8),
-                                _buildCategoryButton("Penyakit"),
-                                SizedBox(width: 8),
-                                _buildCategoryButton("Kesehatan"),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        // Video Terbaru section
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Video Terbaru",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              SizedBox(height: 12),
-                              _buildFeaturedVideoItem(),
-                            ],
-                          ),
-                        ),
-
-                        // History Tontonan section
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "History Tontonan",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              SizedBox(height: 12),
-                              Container(
-                                height: 100,
-                                child: ListView(
-                                  scrollDirection: Axis.horizontal,
-                                  children: [
-                                    _buildHistoryVideoItem(),
-                                    SizedBox(width: 10),
-                                    _buildHistoryVideoItem(),
-                                    SizedBox(width: 10),
-                                    _buildHistoryVideoItem(),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // Video section
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Video",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              SizedBox(height: 12),
-                              _buildVideoListItem(),
-                              SizedBox(height: 12),
-                              _buildVideoListItem(),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  TipsTrikTab(scrollController: widget.scrollController),
                 ],
               ),
             ),
@@ -1156,5 +884,45 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
         ),
       ),
     );
+  }
+
+  int _getCrossAxisCount(double screenWidth) {
+    if (screenWidth > 1200) {
+      return 4; // Very large screens (desktop)
+    } else if (screenWidth > 800) {
+      return 3; // Large screens (tablet landscape)
+    } else if (screenWidth > 600) {
+      return 2; // Medium screens (tablet portrait)
+    } else {
+      return 2; // Small screens (mobile)
+    }
+  }
+
+// Helper method to determine aspect ratio based on screen width
+  double _getChildAspectRatio(double screenWidth) {
+    if (screenWidth > 1200) {
+      return 1.6; // Very large screens
+    } else if (screenWidth > 800) {
+      return 1.5; // Large screens
+    } else if (screenWidth > 600) {
+      return 1.4; // Medium screens
+    } else {
+      return 1.3; // Small screens
+    }
+  }
+
+// Helper method to calculate grid height based on cross axis count and screen width
+  double _calculateGridHeight(int crossAxisCount, double screenWidth) {
+    // Calculate number of rows (4 items total)
+    int rows = (4 / crossAxisCount).ceil();
+
+    // Base item height calculation
+    double itemWidth = (screenWidth - 32 - (crossAxisCount - 1) * 12) /
+        crossAxisCount; // Screen width minus margins and spacing
+    double childAspectRatio = _getChildAspectRatio(screenWidth);
+    double itemHeight = itemWidth / childAspectRatio;
+
+    // Total height = (rows * item height) + ((rows - 1) * main axis spacing)
+    return (rows * itemHeight) + ((rows - 1) * 12);
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:login/models/user_model.dart';
 import 'package:login/controllers/auth_controller.dart';
 import 'package:animated_snack_bar/animated_snack_bar.dart';
+import 'package:flutter/services.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final User user;
@@ -171,6 +172,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       label: 'Nomor Telepon',
       icon: Icons.phone_outlined,
       keyboardType: TextInputType.phone,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
     );
   }
 
@@ -192,6 +194,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     TextInputType? keyboardType,
     int maxLines = 1,
     String? Function(String?)? validator,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -208,6 +211,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       child: TextFormField(
         controller: controller,
         initialValue: initialValue,
+        inputFormatters: inputFormatters,
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(color: Colors.grey.shade600),
@@ -374,7 +378,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           
           widget.onProfileUpdated?.call(updatedUser);
           Navigator.pop(context);
-          _showSnackBar('Profil berhasil diperbarui', AnimatedSnackBarType.success);
         },
       );
     } catch (e) {

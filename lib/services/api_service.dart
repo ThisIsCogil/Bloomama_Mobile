@@ -3,6 +3,12 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 import '../controllers/auth_controller.dart';
+import '../controllers/pregnancy_controller.dart';
+import '../models/health_model.dart';
+import '../models/user_pregnancy.dart';
+import '../models/content_model.dart';
+import '../models/event_model.dart';
+import 'package:flutter/foundation.dart'; // Add this import
 
 class ApiService {
   static const String baseUrl = 'http://127.0.0.1:8000/api';
@@ -209,5 +215,250 @@ static Future<Map<String, dynamic>> changePassword({
   }
 }
 
+static Future<Map<String, dynamic>> registerPregnancy({
+  required int userId,
+  required PregnancyData pregnancyData,
+}) async {
+  final token = await AuthController().getToken();
+  if (token == null) {
+    throw 'Token not found. Please login again.';
+  }
 
+  try {
+    final response = await http.post(
+      Uri.parse('$baseUrl/register-pregnancies/$userId'), // Matches your Laravel route
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(pregnancyData.toApiJson()),
+    );
+
+    final responseData = jsonDecode(response.body);
+
+    if (response.statusCode == 201) {
+      return {
+        'status': true,
+        'message': responseData['message'] ?? 'Pregnancy registered successfully',
+        'data': responseData['data'],
+      };
+    } else {
+      throw responseData['message'] ?? 'Failed to register pregnancy';
+    }
+  } catch (e) {
+    throw 'Failed to connect to server: ${e.toString()}';
+  }
+}
+
+static Future<List<EventModel>> fetchEventsByDate(DateTime date) async {
+    final formattedDate = "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+    final response = await http.get(Uri.parse('$baseUrl/events?date=$formattedDate'));
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((json) => EventModel.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to load events');
+    }
+  }
+
+static Future<PregnancyData?> getPregnancyData(int userId) async {
+  final token = await AuthController().getToken();
+  if (token == null) throw 'Token tidak ditemukan. Silakan login ulang.';
+
+  try {
+    final url = '$baseUrl/getPregnancyData/$userId';
+    debugPrint('Making API call to: $url');
+    debugPrint('Using token: ${token.substring(0, 10)}...'); // Print first 10 chars of token
+    
+    // Menggunakan userId sebagai parameter di URL
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    // Debug: Print response details
+    debugPrint('API Response Status: ${response.statusCode}');
+    debugPrint('API Response Headers: ${response.headers}');
+    debugPrint('API Response Body: ${response.body}');
+
+    if (response.body.isEmpty) {
+      debugPrint('Response body is empty');
+      return null;
+    }
+
+    final data = jsonDecode(response.body);
+    debugPrint('Parsed JSON Data: $data');
+
+    if (response.statusCode == 200) {
+      if (data['success'] == true && data['data'] != null) {
+        debugPrint('Creating PregnancyData from JSON...');
+        debugPrint('Data to parse: ${data['data']}');
+        
+        try {
+          final pregnancyData = PregnancyData.fromApiJson(data['data']);
+          debugPrint('PregnancyData created successfully: ${pregnancyData.pregnancyId}');
+          return pregnancyData;
+        } catch (parseError) {
+          debugPrint('Error parsing PregnancyData: $parseError');
+          throw 'Error parsing pregnancy data: $parseError';
+        }
+      } else {
+        debugPrint('API returned success=false or null data');
+        debugPrint('Success value: ${data['success']}');
+        debugPrint('Data value: ${data['data']}');
+        debugPrint('Message: ${data['message']}');
+        return null;
+      }
+    } else if (response.statusCode == 404) {
+      debugPrint('API returned 404 - Data not found');
+      return null; // Data kehamilan tidak ditemukan
+    } else {
+      debugPrint('API returned error status: ${response.statusCode}');
+      throw data['message'] ?? 'Gagal mengambil data kehamilan (Status: ${response.statusCode})';
+    }
+  } catch (e) {
+    debugPrint('Exception in getPregnancyData: $e');
+    debugPrint('Exception type: ${e.runtimeType}');
+    
+    rethrow; // Re-throw the original exception
+  }
+}
+
+
+static Future<Map<String, dynamic>> getLatestHealthTracking(int userId) async {
+  final token = await AuthController().getToken();
+  if (token == null) throw 'Token tidak ditemukan. Silakan login ulang.';
+
+  final response = await http.get(
+    Uri.parse('$baseUrl/health-trackings/latest/$userId'),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+      
+    },
+  );
+
+  final data = jsonDecode(response.body);
+  return data;
+}
+
+static Future<Map<String, dynamic>> getHealthTrackingByWeek(int userId, int week) async {
+  final token = await AuthController().getToken();
+  if (token == null) throw 'Token tidak ditemukan. Silakan login ulang.';
+
+  final response = await http.get(
+    Uri.parse('$baseUrl/health-trackings/week/$userId/$week'),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    },
+  );
+
+  final data = jsonDecode(response.body);
+  return data;
+  }
+
+  // Add this to your ApiService class
+static Future<Map<String, dynamic>> getHealthTrackingForChart(int userId) async {
+  final token = await AuthController().getToken();
+  if (token == null) throw 'Token not found. Please login again.';
+
+  try {
+    final response = await http.get(
+      Uri.parse('$baseUrl/getHealthTrackingForChart/$userId'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    final responseData = jsonDecode(response.body);
+
+    if (response.statusCode == 200) {
+      return responseData;
+    } else {
+      throw responseData['message'] ?? 'Gagal mengambil tracking data';
+    }
+  } catch (e) {
+    throw 'Gagal menyambung ke server: ${e.toString()}';
+  }
+}
+
+  Future<List<dynamic>> getLatestContent() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/content/latest'));
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['data'];
+      } else {
+        throw Exception('Failed to load content');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  Future<List<dynamic>> getOneContent() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/content/one'));
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['data'];
+      } else {
+        throw Exception('Failed to load content');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  Future<List<dynamic>> getAllContent() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/content/all'));
+      print('API Response: ${response.body}');  // Add this line
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['data'];
+      } else {
+        throw Exception('Failed to load content');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  static Future<List<Content>> getContentByCategory(String category) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/content/category/$category'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
+      
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        if (jsonData['success']) {
+          List<dynamic> contentList = jsonData['data'];
+          return contentList.map((json) => Content.fromJson(json)).toList();
+        } else {
+          throw Exception('Failed to load content');
+        }
+      } else {
+        throw Exception('Failed to load content: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching content: $e');
+    }
+  }
 }
