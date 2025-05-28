@@ -42,7 +42,9 @@ dependencies:
   model_viewer_plus: ^1.9.2
   animated_snack_bar: ^0.4.0
   awesome_dialog: ^3.2.1
-  
+  provider: ^6.0.5
+  url_launcher: ^6.1.11
+  cached_network_image: ^3.3.0
   
   
   # Animation packages for splash screen
