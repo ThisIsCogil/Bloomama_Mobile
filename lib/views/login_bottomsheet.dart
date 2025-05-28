@@ -25,7 +25,13 @@ class _LoginBottomSheetState extends State<LoginBottomSheet> {
           topRight: Radius.circular(30),
         ),
       ),
-      padding: const EdgeInsets.fromLTRB(20, 15, 20, 30),
+      // Gunakan padding yang responsif terhadap keyboard
+      padding: EdgeInsets.fromLTRB(
+        20, 
+        15, 
+        20, 
+        MediaQuery.of(context).viewInsets.bottom + 30
+      ),
       child: Form(
         key: _formKey,
         child: Column(

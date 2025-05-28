@@ -22,7 +22,7 @@ class _TipsTrikTabState extends State<TipsTrikTab>
   bool get wantKeepAlive => true;
 
   // Tambahkan variable untuk menyimpan kategori yang dipilih
-  String? selectedCategory;
+  String? selectedCategory = null;
 
   @override
   void initState() {
@@ -32,9 +32,7 @@ class _TipsTrikTabState extends State<TipsTrikTab>
       if (provider.oneContents.isEmpty && !provider.isLoading) {
         provider.fetchOneContent();
       }
-      if (provider.allContents.isEmpty && !provider.isLoading) {
         provider.fetchAllContent();
-      }
     });
   }
 

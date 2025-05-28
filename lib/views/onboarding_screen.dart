@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:login/views/auth_screen.dart';
-import 'login.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 
