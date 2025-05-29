@@ -76,7 +76,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final double minContentHeight = screenSize.height + 100;
     
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Color(0xFFF2F4F7),
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(
