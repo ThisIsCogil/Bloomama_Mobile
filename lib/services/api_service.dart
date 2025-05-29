@@ -8,6 +8,7 @@ import '../models/health_model.dart';
 import '../models/user_pregnancy.dart';
 import '../models/content_model.dart';
 import '../models/event_model.dart';
+import '../models/appointment.dart';
 import 'package:flutter/foundation.dart'; // Add this import
 
 class ApiService {
@@ -459,6 +460,40 @@ static Future<Map<String, dynamic>> getHealthTrackingForChart(int userId) async 
       }
     } catch (e) {
       throw Exception('Error fetching content: $e');
+    }
+  }
+
+  static Future<List<Appointment>> getAppointmentsByUser(int userId) async {
+    try {
+      final token = await AuthController().getToken();
+      
+      final response = await http.get(
+        Uri.parse('$baseUrl/appointments/user/$userId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        
+        if (responseData['status'] == 'success') {
+          final List<dynamic> appointmentsJson = responseData['data'];
+          return appointmentsJson
+              .map((json) => Appointment.fromJson(json))
+              .toList();
+        } else {
+          throw Exception('API returned error status');
+        }
+      } else if (response.statusCode == 401) {
+        throw Exception('Token expired atau tidak valid. Silakan login kembali.');
+      } else {
+        throw Exception('Failed to load appointments: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
     }
   }
 }

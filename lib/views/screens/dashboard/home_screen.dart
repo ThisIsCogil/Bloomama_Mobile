@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:login/views/screens/dashboard/inbox.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'calender.dart';
 import 'registration_screen.dart';
@@ -393,11 +394,17 @@ class _BabyModelViewerState extends State<BabyModelViewer>
                 ),
                 child: IconButton(
                   icon: const Icon(
-                    Icons.notifications_outlined,
+                    Icons.email_outlined,
                     size: 28,
                     color: Color(0xFF00838F),
                   ),
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => InboxView()),
+                    );
+                  },
                 ),
               ),
               const SizedBox(width: 12),
