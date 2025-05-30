@@ -1,4 +1,6 @@
-  import 'package:flutter/material.dart';
+  import 'dart:io';
+
+import 'package:flutter/material.dart';
   import 'package:lottie/lottie.dart';
   import 'package:animated_snack_bar/animated_snack_bar.dart';
   import 'package:awesome_dialog/awesome_dialog.dart';
@@ -10,6 +12,7 @@
   import 'dart:convert';
 
   class AuthController {
+    static const String baseUrl = 'http://127.0.0.1:8000';
     static const String _userKey = 'user_data';
     static const String _tokenKey = 'auth_token';
 
@@ -153,62 +156,64 @@
     }
 
     Future<void> updateProfile({
-      required BuildContext context,
-      String? name,
-      String? phoneNumber,
-      String? address,
-      String? profilePicture,
-      VoidCallback? onSuccess,
-    }) async {
-      try {
-        // Cek token terlebih dahulu
-        final token = await getToken();
-        if (token == null) {
-          throw 'Anda harus login terlebih dahulu';
-        }
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => Center(
-            child: Lottie.asset(
-              'assets/lottie/loading.json',
-              width: 150,
-              height: 150,
-              fit: BoxFit.fill,
-            ),
-          ),
-        );
-
-        // Call API to update profile
-        final response = await ApiService.updateProfile(
-          name: name,
-          phoneNumber: phoneNumber,
-          address: address,
-          profilePicture: profilePicture,
-        );
-
-        // Close loading dialog
-        Navigator.pop(context);
-
-        if (response['status'] == true) {
-          // Update local user data
-          final updatedUser = response['user'] as User;
-          await saveUser(updatedUser);
-
-          _showSuccessSnackBar(context, 'Profil berhasil diperbarui');
-
-          // Call success callback if provided
-          if (onSuccess != null) {
-            onSuccess();
-          }
-        } else {
-          throw response['message'] ?? 'Gagal memperbarui profil';
-        }
-      } catch (e) {
-        Navigator.pop(context); // Close loading dialog in case of error
-        _showErrorSnackBar(context, e.toString());
+    required BuildContext context,
+    String? name,
+    String? phoneNumber,
+    String? address,
+    File? profileImageFile,
+    VoidCallback? onSuccess,
+  }) async {
+    try {
+      // Cek token terlebih dahulu
+      final token = await getToken();
+      if (token == null) {
+        throw 'Anda harus login terlebih dahulu';
       }
+
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Center(
+          child: Lottie.asset(
+            'assets/lottie/loading.json',
+            width: 150,
+            height: 150,
+            fit: BoxFit.fill,
+          ),
+        ),
+      );
+
+      // Call API to update profile
+      final response = await ApiService.updateProfile(
+        name: name,
+        phoneNumber: phoneNumber,
+        address: address,
+        profileImageFile: profileImageFile,
+      );
+
+      // Close loading dialog
+      Navigator.pop(context);
+
+      if (response['status'] == true) {
+        // Update local user data
+        final updatedUser = response['user'] as User;
+        await saveUser(updatedUser);
+
+        _showSuccessSnackBar(context, 'Profil berhasil diperbarui');
+
+        // Call success callback if provided
+        if (onSuccess != null) {
+          onSuccess();
+        }
+      } else {
+        throw response['message'] ?? 'Gagal memperbarui profil';
+      }
+    } catch (e) {
+      Navigator.pop(context); // Close loading dialog in case of error
+      _showErrorSnackBar(context, e.toString());
     }
+  }
 
     Future<void> changePassword({
       required BuildContext context,

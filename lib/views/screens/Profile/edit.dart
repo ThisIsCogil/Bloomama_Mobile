@@ -3,6 +3,8 @@ import 'package:login/models/user_model.dart';
 import 'package:login/controllers/auth_controller.dart';
 import 'package:animated_snack_bar/animated_snack_bar.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class EditProfileScreen extends StatefulWidget {
   final User user;
@@ -21,10 +23,14 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final AuthController _authController = AuthController();
+  final ImagePicker _picker = ImagePicker();
+  
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
   late TextEditingController _addressController;
   String? _profilePicture;
+  File? _selectedImageFile;
+  bool _isImageChanged = false;
   
   // Warna tema utama
   final Color _themeColor = const Color(0xFF11B3CF);
@@ -118,9 +124,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             child: CircleAvatar(
               radius: 55,
               backgroundColor: Colors.grey[200],
-              backgroundImage: _profilePicture != null
-                  ? NetworkImage(_profilePicture!)
-                  : const AssetImage('assets/logo.png') as ImageProvider,
+              backgroundImage: _getProfileImage(),
             ),
           ),
           Container(
@@ -141,6 +145,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ],
       ),
     );
+  }
+
+  ImageProvider _getProfileImage() {
+    if (_selectedImageFile != null) {
+      return FileImage(_selectedImageFile!);
+    } else if (_profilePicture != null && _profilePicture!.isNotEmpty) {
+      // Jika profile picture adalah URL lengkap, gunakan NetworkImage
+      if (_profilePicture!.startsWith('http')) {
+        return NetworkImage(_profilePicture!);
+      }
+      // Jika hanya path, kombinasikan dengan base URL
+      return NetworkImage('${AuthController.baseUrl}/storage/$_profilePicture');
+    } else {
+      return const AssetImage('assets/logo.png');
+    }
   }
 
   Widget _buildNameField() {
@@ -349,13 +368,45 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _pickImageFromCamera() async {
-    // TODO: Implement camera image capture
-    _showSnackBar('Fitur kamera dalam pengembangan', AnimatedSnackBarType.info);
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 70,
+      );
+
+      if (pickedFile != null) {
+        setState(() {
+          _selectedImageFile = File(pickedFile.path);
+          _isImageChanged = true;
+        });
+        _showSnackBar('Foto berhasil diambil dari kamera', AnimatedSnackBarType.success);
+      }
+    } catch (e) {
+      _showSnackBar('Gagal mengambil foto dari kamera: $e', AnimatedSnackBarType.error);
+    }
   }
 
   Future<void> _pickImageFromGallery() async {
-    // TODO: Implement gallery image picking
-    _showSnackBar('Fitur galeri dalam pengembangan', AnimatedSnackBarType.info);
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 70,
+      );
+
+      if (pickedFile != null) {
+        setState(() {
+          _selectedImageFile = File(pickedFile.path);
+          _isImageChanged = true;
+        });
+        _showSnackBar('Foto berhasil dipilih dari galeri', AnimatedSnackBarType.success);
+      }
+    } catch (e) {
+      _showSnackBar('Gagal memilih foto dari galeri: $e', AnimatedSnackBarType.error);
+    }
   }
 
   Future<void> _submitForm() async {
@@ -367,7 +418,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         name: _nameController.text,
         phoneNumber: _phoneController.text,
         address: _addressController.text,
-        profilePicture: _profilePicture,
+        profileImageFile: _isImageChanged ? _selectedImageFile : null,
         onSuccess: () {
           final updatedUser = widget.user.copyWith(
             name: _nameController.text,

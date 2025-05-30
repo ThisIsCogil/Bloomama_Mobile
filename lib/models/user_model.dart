@@ -8,6 +8,7 @@ class User {
   final String? phoneNumber;
   final String? address;
   final String? profilePicture;
+  final String? profilePictureUrl;
   final String? token;
 
   User({
@@ -18,6 +19,7 @@ class User {
     this.phoneNumber,
     this.address,
     this.profilePicture,
+    this.profilePictureUrl,
     this.token,
   });
 
@@ -30,6 +32,7 @@ class User {
       phoneNumber: json['phone_number'],
       address: json['address'],
       profilePicture: json['profile_picture'],
+      profilePictureUrl: json['profile_picture_url'],
       token: json['token'],
     );
   }
@@ -44,6 +47,7 @@ class User {
       if (phoneNumber != null) 'phone_number': phoneNumber,
       if (address != null) 'address': address,
       if (profilePicture != null) 'profile_picture': profilePicture,
+      if (profilePictureUrl != null) 'profile_picture_url': profilePictureUrl,
       if (token != null) 'token': token,
     };
   }
@@ -57,6 +61,7 @@ class User {
       'phone_number': phoneNumber,
       'address': address,
       'profile_picture': profilePicture,
+      'profile_picture_url': profilePictureUrl,
       // Never store password or token in SharedPreferences
     });
   }
@@ -71,6 +76,7 @@ class User {
       phoneNumber: data['phone_number'],
       address: data['address'],
       profilePicture: data['profile_picture'],
+      profilePictureUrl: data['profile_picture_url'],
       // Don't retrieve password or token from SharedPreferences
     );
   }
@@ -84,6 +90,7 @@ class User {
     String? phoneNumber,
     String? address,
     String? profilePicture,
+    String? profilePictureUrl,
     String? token,
   }) {
     return User(
@@ -94,7 +101,19 @@ class User {
       phoneNumber: phoneNumber ?? this.phoneNumber,
       address: address ?? this.address,
       profilePicture: profilePicture ?? this.profilePicture,
+      profilePictureUrl: profilePictureUrl ?? this.profilePictureUrl,
       token: token ?? this.token,
     );
+  }
+
+  // Get profile image URL with fallback
+  String? getProfileImageUrl() {
+    if (profilePictureUrl != null && profilePictureUrl!.isNotEmpty) {
+      return profilePictureUrl;
+    } else if (profilePicture != null && profilePicture!.isNotEmpty) {
+      // Fallback to construct URL from profile_picture path
+      return 'YOUR_LARAVEL_BASE_URL/storage/$profilePicture';
+    }
+    return null;
   }
 }

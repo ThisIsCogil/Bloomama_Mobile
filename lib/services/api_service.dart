@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
@@ -145,47 +146,67 @@ class ApiService {
   }
 
   /// Update user profile
-  static Future<Map<String, dynamic>> updateProfile({
-  String? name,
-  String? phoneNumber,
-  String? address,
-  String? profilePicture,
-}) async {
-   final token = await AuthController().getToken(); 
-  if (token == null) {
-    throw 'Token tidak ditemukan. Silakan login kembali.';
+static Future<Map<String, dynamic>> updateProfile({
+    String? name,
+    String? phoneNumber,
+    String? address,
+    File? profileImageFile,
+  }) async {
+    final token = await AuthController().getToken();
+    if (token == null) {
+      throw 'Token tidak ditemukan. Silakan login kembani.';
+    }
+
+    try {
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/update-profile'),
+      );
+
+      // Add headers
+      request.headers.addAll({
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      });
+
+      // Add text fields
+      if (name != null) request.fields['name'] = name;
+      if (phoneNumber != null) request.fields['phone_number'] = phoneNumber;
+      if (address != null) request.fields['address'] = address;
+      
+      // Add method spoofing for PUT request
+      request.fields['_method'] = 'PUT';
+
+      // Add profile image if provided
+      if (profileImageFile != null) {
+        var profilePicture = await http.MultipartFile.fromPath(
+          'profile_picture',
+          profileImageFile.path,
+        );
+        request.files.add(profilePicture);
+      }
+
+      // Send request
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+      
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        final updatedUser = User.fromJson(data['data']['user']);
+        await AuthController().saveUser(updatedUser);
+        return {
+          'status': true,
+          'message': data['message'] ?? 'Profil berhasil diperbarui',
+          'user': updatedUser,
+        };
+      } else {
+        throw data['message'] ?? 'Gagal memperbarui profil';
+      }
+    } catch (e) {
+      throw 'Error: $e';
+    }
   }
-
-  // Prepare the request body with only non-null values
-  final Map<String, dynamic> requestBody = {};
-  if (name != null) requestBody['name'] = name;
-  if (phoneNumber != null) requestBody['phone_number'] = phoneNumber;
-  if (address != null) requestBody['address'] = address;
-  if (profilePicture != null) requestBody['profile_picture'] = profilePicture;
-
-  final response = await http.put(
-    Uri.parse('$baseUrl/update-profile'), // ✅ pastikan sesuai dengan backend
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token', // ✅ pastikan format Bearer benar
-    },
-    body: jsonEncode(requestBody),
-  );
-
-  final data = jsonDecode(response.body);
-
-  if (response.statusCode == 200) {
-    final updatedUser = User.fromJson(data['data']['user']);
-    await AuthController().saveUser(updatedUser);
-    return {
-      'status': true,
-      'message': data['message'] ?? 'Profil berhasil diperbarui',
-      'user': updatedUser,
-    };
-  } else {
-    throw data['message'] ?? 'Gagal memperbarui profil';
-  }
-}
 
 static Future<Map<String, dynamic>> changePassword({
   required String currentPassword,
@@ -496,4 +517,33 @@ static Future<Map<String, dynamic>> getHealthTrackingForChart(int userId) async 
       throw Exception('Network error: $e');
     }
   }
+
+  static Future<void> updateAppointmentStatus(int appointmentId, String newStatus) async {
+  try {
+    final token = await AuthController().getToken();
+    
+    final response = await http.put(
+      Uri.parse('$baseUrl/appointments/$appointmentId/status'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+      body: json.encode({'status': newStatus}),
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      if (responseData['status'] != 'success') {
+        throw Exception('Failed to update appointment status');
+      }
+    } else if (response.statusCode == 401) {
+      throw Exception('Token expired or invalid. Please login again.');
+    } else {
+      throw Exception('Failed to update appointment: ${response.statusCode}');
+    }
+  } catch (e) {
+    throw Exception('Network error: $e');
+  }
+}
 }

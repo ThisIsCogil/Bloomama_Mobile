@@ -6,6 +6,7 @@ import 'package:login/controllers/auth_controller.dart';
 import 'package:login/models/user_model.dart';
 import 'package:animated_snack_bar/animated_snack_bar.dart';
 import 'package:flutter/services.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ProfileScreen extends StatefulWidget {
   final ScrollController scrollController;
@@ -229,6 +230,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildProfilePicture(double radius, double statusIndicatorRadius) {
+    // Get the profile image URL
+    final String? profileImageUrl = _user?.getProfileImageUrl();
+    
     return Stack(
       alignment: Alignment.bottomRight,
       children: [
@@ -248,9 +252,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: CircleAvatar(
             radius: radius,
             backgroundColor: Colors.grey[200],
-            backgroundImage: _user?.profilePicture != null
-                ? NetworkImage(_user!.profilePicture!)
-                : const AssetImage('assets/logo.png') as ImageProvider,
+            child: _buildProfileImage(profileImageUrl, radius),
           ),
         ),
         // Status indicator
@@ -267,6 +269,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildProfileImage(String? imageUrl, double radius) {
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      // Use CachedNetworkImage for better performance and caching
+      return CachedNetworkImage(
+        imageUrl: imageUrl,
+        imageBuilder: (context, imageProvider) => Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            image: DecorationImage(
+              image: imageProvider,
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+        placeholder: (context, url) => Container(
+          width: radius * 2,
+          height: radius * 2,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.grey[300],
+          ),
+          child: const Center(
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF11B3CF)),
+            ),
+          ),
+        ),
+        errorWidget: (context, url, error) => _buildDefaultAvatar(radius),
+        fit: BoxFit.cover,
+      );
+    } else {
+      return _buildDefaultAvatar(radius);
+    }
+  }
+
+  Widget _buildDefaultAvatar(double radius) {
+    return Container(
+      width: radius * 2,
+      height: radius * 2,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: const Color(0xFF11B3CF).withOpacity(0.1),
+      ),
+      child: Icon(
+        Icons.person,
+        size: radius * 0.8,
+        color: const Color(0xFF11B3CF),
+      ),
     );
   }
 

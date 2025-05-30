@@ -373,7 +373,7 @@ final Map<int, Map<String, dynamic>> _weekData = {
     super.dispose();
   }
 
-  Widget _buildColoredStatItem({
+Widget _buildColoredStatItem({
     required String title,
     required String value,
     required String unit,
@@ -399,7 +399,7 @@ final Map<int, Map<String, dynamic>> _weekData = {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10), // Slightly reduced padding
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -412,27 +412,28 @@ final Map<int, Map<String, dynamic>> _weekData = {
                   color: color.withOpacity(0.3),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, size: 18, color: color),
+                child: Icon(icon, size: 16, color: color), // Slightly smaller icon
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6), // Reduced spacing
               Expanded(
                 child: Text(
                   title,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 12, // Reduced font size
                     fontWeight: FontWeight.w500,
                     color: color,
                   ),
                   overflow: TextOverflow.ellipsis,
-                  maxLines: 2, // Allow 2 lines for longer titles
+                  maxLines: 2,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Flexible(
+          const SizedBox(height: 6), // Reduced spacing
+          Expanded( // Changed from Flexible to Expanded
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 FittedBox(
                   fit: BoxFit.scaleDown,
@@ -440,7 +441,7 @@ final Map<int, Map<String, dynamic>> _weekData = {
                   child: Text(
                     value,
                     style: const TextStyle(
-                      fontSize: 24,
+                      fontSize: 20, // Slightly reduced font size
                       fontWeight: FontWeight.bold,
                       color: Colors.black87,
                     ),
@@ -449,7 +450,7 @@ final Map<int, Map<String, dynamic>> _weekData = {
                 Text(
                   unit,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 11, // Slightly reduced font size
                     color: Colors.grey[700],
                   ),
                 ),
