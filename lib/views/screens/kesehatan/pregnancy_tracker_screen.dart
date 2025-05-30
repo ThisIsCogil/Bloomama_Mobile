@@ -18,9 +18,11 @@ class PregnancyTrackerScreen extends StatefulWidget {
 class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
   final KesehatanController _kesehatanController = KesehatanController(apiService: ApiService(),);
   int _selectedWeek = 1;
-  bool isSearching = false;
   HealthData? _currentWeekHealthData;
   bool _isLoadingHealthData = false;
+  final TextEditingController _searchController = TextEditingController();
+  bool _isSearching = false;
+  String _searchQuery = '';
 
   final Map<String, bool> _imageExistsCache = {};
 
@@ -407,6 +409,7 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
   @override
   void dispose() {
     _imageExistsCache.clear();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -498,118 +501,130 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
+@override
+Widget build(BuildContext context) {
+  return DefaultTabController(
+    length: 2,
+    child: Scaffold(
+      backgroundColor: Color(0xFFF2F4F7),
+      extendBody: true,
+      appBar: AppBar(
+        toolbarHeight: 0,
+        elevation: 0,
         backgroundColor: Color(0xFFF2F4F7),
-        extendBody: true,
-        body: Column(
+      ),
+      body: Container(
+        color: Color(0xFFF2F4F7),
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: MediaQuery.of(context).padding.top + 1),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: AnimatedSwitcher(
-                duration: Duration(milliseconds: 250),
-                transitionBuilder: (child, animation) {
-                  return FadeTransition(
-                    opacity: animation,
-                    child: child,
-                  );
-                },
-                child: isSearching
-                    ? Row(
-                        key: ValueKey('search'),
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              decoration: InputDecoration(
-                                hintText: 'Cari Tips n Trik...',
-                                prefixIcon: Icon(Icons.search),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                contentPadding: EdgeInsets.symmetric(
-                                    vertical: 0, horizontal: 12),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 12),
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                isSearching = false; // Only close search
-                              });
-                            },
-                            child: Icon(Icons.close,
-                                size: 28, color: Colors.black54),
-                          ),
-                        ],
-                      )
-                    : Row(
-                        key: ValueKey('normal'),
+            // Header section dengan padding yang lebih kecil
+            Builder(
+              builder: (context) {
+                final currentTab = DefaultTabController.of(context)?.index ?? 0;
+                return Container(
+                  color: Color(0xFFF2F4F7),
+                  padding: EdgeInsets.only(
+                    top: MediaQuery.of(context).padding.top + 8, // Dikurangi dari 16
+                    left: 20,
+                    right: 20,
+                    bottom: 8, // Dikurangi dari 16
+                  ),
+                  child: Column(
+                    children: [
+                      // Title dan Search Row
+                      Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            "Kesehatan",
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black87,
-                            ),
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 300),
+                            child: _isSearching
+                                ? SizedBox(
+                                    key: ValueKey('search-field'),
+                                    width: MediaQuery.of(context).size.width - 100,
+                                    child: TextField(
+                                      controller: _searchController,
+                                      autofocus: true,
+                                      decoration: InputDecoration(
+                                        hintText: 'Cari Tips n Trik...',
+                                        border: InputBorder.none,
+                                        hintStyle: TextStyle(color: Colors.grey),
+                                        filled: true,
+                                        fillColor: Color(0xFFF2F4F7),
+                                      ),
+                                      style: TextStyle(color: Colors.black87),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _searchQuery = value;
+                                        });
+                                      },
+                                    ),
+                                  )
+                                : Text(
+                                    "Kesehatan",
+                                    key: ValueKey('title'),
+                                    style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
                           ),
-                          Row(
-                            children: [
-                              GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    isSearching = true;
-                                  });
-                                },
-                                child: Icon(Icons.search,
-                                    size: 28, color: Colors.black54),
+                          if (currentTab == 1)
+                            IconButton(
+                              icon: AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 300),
+                                child: _isSearching
+                                    ? Icon(Icons.close, key: ValueKey('close-icon'))
+                                    : Icon(Icons.search, key: ValueKey('search-icon')),
                               ),
-                              
-                            ],
-                          ),
+                              onPressed: () {
+                                setState(() {
+                                  _isSearching = !_isSearching;
+                                  if (!_isSearching) {
+                                    _searchController.clear();
+                                    _searchQuery = '';
+                                  }
+                                });
+                              },
+                            ),
                         ],
                       ),
-              ),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(color: Colors.grey.shade300, width: 1),
-                ),
-              ),
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: TabBar(
-                      indicatorWeight: 4,
-                      indicatorSize: TabBarIndicatorSize.label,
-                      indicatorColor: Color(0xFF10B2CF),
-                      labelColor: Color(0xFF10B2CF),
-                      unselectedLabelColor: Colors.grey,
-                      labelStyle: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
+                      SizedBox(height: 12), // Dikurangi dari 16
+                      // TabBar dengan ukuran yang lebih kompak
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Color(0xFFF2F4F7),
+                          border: Border(
+                            bottom: BorderSide(color: Colors.grey.shade300, width: 1),
+                          ),
+                        ),
+                        child: TabBar(
+                          indicatorWeight: 3, // Dikurangi dari 4
+                          indicatorSize: TabBarIndicatorSize.label,
+                          indicatorColor: Color(0xFF10B2CF),
+                          labelColor: Color(0xFF10B2CF),
+                          unselectedLabelColor: Colors.grey,
+                          labelStyle: TextStyle(
+                            fontSize: 16, // Dikurangi dari 18
+                            fontWeight: FontWeight.w600,
+                          ),
+                          unselectedLabelStyle: TextStyle(
+                            fontSize: 16, // Dikurangi dari 18
+                            fontWeight: FontWeight.w400,
+                          ),
+                          // Mengurangi padding di TabBar
+                          labelPadding: EdgeInsets.symmetric(vertical: 8), // Tambahkan ini
+                          tabs: [
+                            Tab(text: "Minggu Si-Bayi"),
+                            Tab(text: "Tips & Trik"),
+                          ],
+                        ),
                       ),
-                      unselectedLabelStyle: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w400,
-                      ),
-                      tabs: [
-                        Tab(text: "Minggu Si-Bayi"),
-                        Tab(text: "Tips & Trik"),
-                      ],
-                    ),
+                    ],
                   ),
-                ],
-              ),
+                );
+              },
             ),
             Expanded(
               child: TabBarView(
@@ -876,15 +891,20 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
                     ),
                   ),
                   // Second Tab - Tips & Trik
-                  TipsTrikTab(scrollController: widget.scrollController),
-                ],
-              ),
+                 TipsTrikTab(
+                  scrollController: widget.scrollController,
+                  searchQuery: _searchQuery,
+                  isSearching: _isSearching,
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+    ),
+  );
+}
 
   int _getCrossAxisCount(double screenWidth) {
     if (screenWidth > 1200) {
