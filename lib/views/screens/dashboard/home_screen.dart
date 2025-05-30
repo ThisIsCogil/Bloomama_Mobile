@@ -470,7 +470,7 @@ class _BabyModelViewerState extends State<BabyModelViewer>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  "Good afternoon,",
+                  "Selamat Datang,",
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w500,
