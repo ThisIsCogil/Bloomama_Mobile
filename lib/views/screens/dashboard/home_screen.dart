@@ -470,7 +470,7 @@ class _BabyModelViewerState extends State<BabyModelViewer>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  "Good afternoon,",
+                  "Selamat Datang,",
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w500,
@@ -771,41 +771,38 @@ class _BabyModelViewerState extends State<BabyModelViewer>
   }
 
   Widget _buildHealthStats() {
-    return Column(
-      children: [
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    "Health Data",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: _refreshHealthData,
-                    icon: const Icon(
-                      Icons.refresh,
-                      color: Color(0xFF00838F),
-                      size: 20,
-                    ),
-                    tooltip: 'Refresh Data',
-                  ),
-                ],
+              const Text(
+                "Health Data",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
               ),
-              const SizedBox(height: 8),
-              _buildHealthContent(),
+              IconButton(
+                onPressed: _refreshHealthData,
+                icon: const Icon(
+                  Icons.refresh,
+                  color: Color(0xFF00838F),
+                  size: 20,
+                ),
+                tooltip: 'Refresh Data',
+              ),
             ],
           ),
-        ),
-      ],
+          // Reduced spacing here
+          const SizedBox(height: 4),
+          _buildHealthContent(),
+        ],
+      ),
     );
   }
 
@@ -856,53 +853,49 @@ class _BabyModelViewerState extends State<BabyModelViewer>
     int crossAxisCount = _getCrossAxisCount(screenWidth);
     double childAspectRatio = _getChildAspectRatio(screenWidth);
 
-    // Use SizedBox with calculated height to prevent layout shifts
-    double gridHeight = _calculateGridHeight(crossAxisCount, screenWidth);
-
-    return SizedBox(
-      height: gridHeight,
-      child: GridView.count(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: crossAxisCount,
-        childAspectRatio: childAspectRatio,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        children: [
-          _buildColoredStatItem(
-            title: "Tekanan Darah",
-            value: _cachedHealthData?.bloodPressure ?? '-/-',
-            unit: "mmHg",
-            icon: Icons.monitor_heart_outlined,
-            color: Colors.blue[400]!,
-          ),
-          _buildColoredStatItem(
-            title: "Detak Jantung",
-            value: _cachedHealthData?.heartRate?.toString() ?? '-',
-            unit: "BPM",
-            icon: Icons.favorite_outline,
-            color: Colors.red[400]!,
-          ),
-          _buildColoredStatItem(
-            title: "Berat Badan",
-            value: _cachedHealthData?.weight?.toString() ?? '-',
-            unit: "Kg",
-            icon: Icons.scale_outlined,
-            color: Colors.orange[400]!,
-          ),
-          _buildColoredStatItem(
-            title: "Tinggi Badan",
-            value: _cachedHealthData?.height?.toString() ?? '-',
-            unit: "Cm",
-            icon: Icons.straighten_outlined,
-            color: Colors.lightBlue[400]!,
-          ),
-        ],
-      ),
+    // Remove SizedBox height constraint and let GridView size itself
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: crossAxisCount,
+      childAspectRatio: childAspectRatio,
+      mainAxisSpacing: 8, // Reduced spacing
+      crossAxisSpacing: 8, // Reduced spacing
+      padding: EdgeInsets.zero, // Remove default padding
+      children: [
+        _buildColoredStatItem(
+          title: "Tekanan Darah",
+          value: _cachedHealthData?.bloodPressure ?? '-/-',
+          unit: "mmHg",
+          icon: Icons.monitor_heart_outlined,
+          color: Colors.blue[400]!,
+        ),
+        _buildColoredStatItem(
+          title: "Detak Jantung",
+          value: _cachedHealthData?.heartRate?.toString() ?? '-',
+          unit: "BPM",
+          icon: Icons.favorite_outline,
+          color: Colors.red[400]!,
+        ),
+        _buildColoredStatItem(
+          title: "Berat Badan",
+          value: _cachedHealthData?.weight?.toString() ?? '-',
+          unit: "Kg",
+          icon: Icons.scale_outlined,
+          color: Colors.orange[400]!,
+        ),
+        _buildColoredStatItem(
+          title: "Tinggi Badan",
+          value: _cachedHealthData?.height?.toString() ?? '-',
+          unit: "Cm",
+          icon: Icons.straighten_outlined,
+          color: Colors.lightBlue[400]!,
+        ),
+      ],
     );
   }
 
-// Helper method to determine cross axis count based on screen width
+  // Helper method to determine cross axis count based on screen width
   int _getCrossAxisCount(double screenWidth) {
     if (screenWidth > 1200) {
       return 4; // Very large screens (desktop)
@@ -915,7 +908,7 @@ class _BabyModelViewerState extends State<BabyModelViewer>
     }
   }
 
-// Helper method to determine aspect ratio based on screen width
+  // Helper method to determine aspect ratio based on screen width
   double _getChildAspectRatio(double screenWidth) {
     if (screenWidth > 1200) {
       return 1.6; // Very large screens
@@ -924,23 +917,8 @@ class _BabyModelViewerState extends State<BabyModelViewer>
     } else if (screenWidth > 600) {
       return 1.4; // Medium screens
     } else {
-      return 1.3; // Small screens
+      return 1.2; // Increased ratio for mobile to prevent cutting off
     }
-  }
-
-// Helper method to calculate grid height based on cross axis count and screen width
-  double _calculateGridHeight(int crossAxisCount, double screenWidth) {
-    // Calculate number of rows (4 items total)
-    int rows = (4 / crossAxisCount).ceil();
-
-    // Base item height calculation
-    double itemWidth = (screenWidth - 32 - (crossAxisCount - 1) * 12) /
-        crossAxisCount; // Screen width minus margins and spacing
-    double childAspectRatio = _getChildAspectRatio(screenWidth);
-    double itemHeight = itemWidth / childAspectRatio;
-
-    // Total height = (rows * item height) + ((rows - 1) * main axis spacing)
-    return (rows * itemHeight) + ((rows - 1) * 12);
   }
 
   Widget _buildColoredStatItem({
@@ -969,7 +947,7 @@ class _BabyModelViewerState extends State<BabyModelViewer>
           ),
         ],
       ),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10), // Slightly reduced padding
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -982,27 +960,28 @@ class _BabyModelViewerState extends State<BabyModelViewer>
                   color: color.withOpacity(0.3),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, size: 18, color: color),
+                child: Icon(icon, size: 16, color: color), // Slightly smaller icon
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6), // Reduced spacing
               Expanded(
                 child: Text(
                   title,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 12, // Reduced font size
                     fontWeight: FontWeight.w500,
                     color: color,
                   ),
                   overflow: TextOverflow.ellipsis,
-                  maxLines: 2, // Allow 2 lines for longer titles
+                  maxLines: 2,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Flexible(
+          const SizedBox(height: 6), // Reduced spacing
+          Expanded( // Changed from Flexible to Expanded
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 FittedBox(
                   fit: BoxFit.scaleDown,
@@ -1010,7 +989,7 @@ class _BabyModelViewerState extends State<BabyModelViewer>
                   child: Text(
                     value,
                     style: const TextStyle(
-                      fontSize: 24,
+                      fontSize: 20, // Slightly reduced font size
                       fontWeight: FontWeight.bold,
                       color: Colors.black87,
                     ),
@@ -1019,7 +998,7 @@ class _BabyModelViewerState extends State<BabyModelViewer>
                 Text(
                   unit,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 11, // Slightly reduced font size
                     color: Colors.grey[700],
                   ),
                 ),

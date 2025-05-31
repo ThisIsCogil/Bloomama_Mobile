@@ -18,295 +18,257 @@ class PregnancyTrackerScreen extends StatefulWidget {
 class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
   final KesehatanController _kesehatanController = KesehatanController(apiService: ApiService(),);
   int _selectedWeek = 1;
-  bool isSearching = false;
   HealthData? _currentWeekHealthData;
   bool _isLoadingHealthData = false;
+  final TextEditingController _searchController = TextEditingController();
+  bool _isSearching = false;
+  String _searchQuery = '';
 
   final Map<String, bool> _imageExistsCache = {};
 
-  final Map<int, Map<String, dynamic>> _weekData = {
-    1: {
-      'size': '0.1 cm, Poppy seed',
-      'title': 'The beginning',
-      'description':
-          'Conception has just occurred! The fertilized egg is dividing rapidly as it travels down the fallopian tube toward the uterus.',
-      'emoji': '🌱',
-      'notes': 'Semua normal, lanjutkan makan bergizi.',
-    },
-    2: {
-      'size': '0.2 cm, Sesame seed',
-      'title': 'Getting comfortable',
-      'description':
-          'The embryo attaches to the uterine lining. The placenta starts to form and will eventually deliver nutrients to the baby.',
-      'emoji': '🌱',
-    },
-    3: {
-      'size': '0.4 cm, Poppy seed',
-      'title': 'Forming layers',
-      'description':
-          'The embryo is now made up of three layers that will develop into different parts of the body.',
-      'emoji': '🌱',
-    },
-    4: {
-      'size': '0.6 cm, Blueberry',
-      'title': 'Taking shape',
-      'description':
-          'The neural tube, which will develop into the brain and spinal cord, is forming. Small buds that will become arms and legs start to appear.',
-      'emoji': '🫐',
-    },
-    5: {
-      'size': '1.3 cm, Grape',
-      'title': 'Growing rapidly',
-      'description':
-          'The heart is now beating at a regular rhythm. Other organs are starting to develop, and the embryo has a curved C-shape.',
-      'emoji': '🍇',
-    },
-    6: {
-      'size': '1.7 cm, Lentil',
-      'title': 'Facial features forming',
-      'description':
-          'Eyes, ears, and nose are beginning to form. The embryo is about the size of a lentil.',
-      'emoji': '🫘',
-    },
-    7: {
-      'size': '2.5 cm, Raspberry',
-      'title': 'Limb development',
-      'description':
-          'Arms and legs are growing longer, and fingers and toes are beginning to form. The embryo is now officially a fetus.',
-      'emoji': '🍓',
-    },
-    8: {
-      'size': '3.0 cm, Kidney bean',
-      'title': 'Becoming more human',
-      'description':
-          'All essential organs have begun to form. The ears are developing, and the eyelids are starting to cover the eyes.',
-      'emoji': '🫘',
-    },
-    9: {
-      'size': '4.0 cm, Grape',
-      'title': 'Moving around',
-      'description':
-          'The baby is starting to move, but you probably won\'t feel it yet. Tiny muscles are developing.',
-      'emoji': '🍇',
-    },
-    10: {
-      'size': '5.0 cm, Strawberry',
-      'title': 'Developing bones',
-      'description':
-          'The skeleton is forming from cartilage into bone. The baby now has a more human appearance.',
-      'emoji': '🍓',
-    },
-    11: {
-      'size': '6.0 cm, Fig',
-      'title': 'Distinct features',
-      'description':
-          'The baby\'s face is broadening, and the ears are positioned on the sides of the head. Tooth buds are forming.',
-      'emoji': '🫐',
-    },
-    12: {
-      'size': '7.0 cm, Lime',
-      'title': 'End of first trimester',
-      'description':
-          'The baby\'s gender may be visible now. The baby can make facial expressions and even suck their thumb.',
-      'emoji': '🫒',
-    },
-    13: {
-      'size': '8.0 cm, Lemon',
-      'title': 'Unique fingerprints',
-      'description':
-          'The baby\'s fingerprints are forming. The baby is also starting to produce and secrete urine.',
-      'emoji': '🍋',
-    },
-    14: {
-      'size': '9.0 cm, Apple',
-      'title': 'Rapid growth',
-      'description':
-          'The baby\'s body is growing faster than their head. The neck is becoming more defined.',
-      'emoji': '🍎',
-    },
-    15: {
-      'size': '10.0 cm, Orange',
-      'title': 'Sensing light',
-      'description':
-          'The baby\'s eyes are becoming sensitive to light. They can also hear sounds from outside the womb.',
-      'emoji': '🍊',
-    },
-    16: {
-      'size': '11.5 cm, Avocado',
-      'title': 'Developing senses',
-      'description':
-          'The baby can hear your voice now. The legs are growing longer than the arms, and the body is becoming more proportionate.',
-      'emoji': '🥑',
-    },
-    17: {
-      'size': '13.0 cm, Pear',
-      'title': 'Growing stronger',
-      'description':
-          'The baby is developing adipose tissue (fat) and is starting to look more like a newborn.',
-      'emoji': '🍐',
-    },
-    18: {
-      'size': '14.2 cm, Sweet potato',
-      'title': 'Stretching out',
-      'description':
-          'The baby\'s movements are becoming more coordinated. They can yawn, stretch, and make facial expressions.',
-      'emoji': '🍠',
-    },
-    19: {
-      'size': '15.3 cm, Sandwich Subway!',
-      'title': 'Breathing in! Breathing out!',
-      'description':
-          'My sensitive skin is now covered in vernix caseosa, a greasy, white, cheese-like coating that protects my skin from being wrinkled at birth. Lungs are developing, with the main airways (called bronchioles) beginning to form this week.',
-      'emoji': '🥪',
-    },
-    20: {
-      'size': '16.5 cm, Banana',
-      'title': 'Halfway there!',
-      'description':
-          'You\'re halfway through your pregnancy! The baby is developing a regular sleep-wake cycle and may respond to sounds with movement.',
-      'emoji': '🍌',
-    },
+final Map<int, Map<String, dynamic>> _weekData = {
+  1: {
+    'size': '0.1 cm, Biji Opium',
+    'title': 'Awal Kehidupan',
+    'description': 'Pembuahan baru saja terjadi! Sel telur yang telah dibuahi sedang membelah cepat menuju rahim.',
+    'emoji': '🌱',
+    'notes': 'Semua normal, lanjutkan makan bergizi.',
+  },
+  2: {
+    'size': '0.2 cm, Biji Wijen',
+    'title': 'Mulai Menempel',
+    'description': 'Embrio mulai menempel di dinding rahim. Plasenta mulai terbentuk untuk memberi nutrisi.',
+    'emoji': '🌰',
+  },
+  3: {
+    'size': '0.4 cm, Biji Chia',
+    'title': 'Membentuk Lapisan',
+    'description': 'Embrio kini memiliki tiga lapisan utama yang akan menjadi bagian tubuh.',
+    'emoji': '🔹',
+  },
+  4: {
+    'size': '0.6 cm, Beras',
+    'title': 'Mulai Terbentuk',
+    'description': 'Tabung saraf mulai terbentuk menjadi otak dan tulang belakang.',
+    'emoji': '🌾',
+  },
+  5: {
+    'size': '1.3 cm, Biji Apel',
+    'title': 'Pertumbuhan Cepat',
+    'description': 'Jantung mulai berdetak teratur dan organ-organ mulai berkembang.',
+    'emoji': '🍎',
+  },
+  6: {
+    'size': '1.7 cm, Kacang Merah',
+    'title': 'Ciri Wajah Mulai Terbentuk',
+    'description': 'Mata, telinga, dan hidung mulai terlihat.',
+    'emoji': '🫘',
+  },
+  7: {
+    'size': '2.5 cm, Blueberry',
+    'title': 'Perkembangan Anggota Tubuh',
+    'description': 'Tangan dan kaki bertumbuh dengan jari-jari mulai terbentuk.',
+    'emoji': '🫐',
+  },
+  8: {
+    'size': '3.0 cm, Raspberry',
+    'title': 'Semakin Menyerupai Manusia',
+    'description': 'Organ penting mulai terbentuk dan kelopak mata mulai menutupi mata.',
+    'emoji': '🍓',
+  },
+  9: {
+    'size': '4.0 cm, Cherry',
+    'title': 'Mulai Bergerak',
+    'description': 'Bayi mulai bergerak walau belum terasa. Otot mulai berkembang.',
+    'emoji': '🍒',
+  },
+  10: {
+    'size': '5.0 cm, Strawberry',
+    'title': 'Tulang Mulai Terbentuk',
+    'description': 'Kerangka mulai berkembang dari tulang rawan menjadi tulang keras.',
+    'emoji': '🍓',
+  },
+  11: {
+    'size': '6.0 cm, Jeruk Nipis',
+    'title': 'Ciri Unik Terlihat',
+    'description': 'Bentuk wajah semakin jelas dan tunas gigi mulai muncul.',
+    'emoji': '🍋',
+  },
+  12: {
+    'size': '7.0 cm, Plum',
+    'title': 'Akhir Trimester Pertama',
+    'description': 'Jenis kelamin mungkin mulai terlihat dan bayi bisa menghisap jempol.',
+    'emoji': '🍑',
+  },
+  13: {
+    'size': '8.0 cm, Lemon',
+    'title': 'Sidik Jari Terbentuk',
+    'description': 'Sidik jari bayi mulai terbentuk dan bayi mulai buang air kecil.',
+    'emoji': '🍋',
+  },
+  14: {
+    'size': '9.0 cm, Buah Persik',
+    'title': 'Pertumbuhan Pesat',
+    'description': 'Tubuh tumbuh lebih cepat dari kepala dan leher semakin terlihat.',
+    'emoji': '🍑',
+  },
+  15: {
+    'size': '10.0 cm, Apel',
+    'title': 'Mengenal Cahaya',
+    'description': 'Mata bayi mulai sensitif terhadap cahaya dan bisa mendengar suara.',
+    'emoji': '🍎',
+  },
+  16: {
+    'size': '11.5 cm, Alpukat',
+    'title': 'Perkembangan Indra',
+    'description': 'Bayi bisa mendengar suara ibu. Kaki tumbuh lebih panjang dari tangan.',
+    'emoji': '🥑',
+  },
+  17: {
+    'size': '13.0 cm, Pir',
+    'title': 'Bertambah Kuat',
+    'description': 'Bayi mulai membentuk jaringan lemak dan tampak seperti bayi baru lahir.',
+    'emoji': '🍐',
+  },
+  18: {
+    'size': '14.2 cm, Paprika',
+    'title': 'Peregangan',
+    'description': 'Gerakan bayi semakin terkoordinasi. Bisa menguap dan meregang.',
+    'emoji': '🫑',
+  },
+  19: {
+    'size': '15.3 cm, Mangga',
+    'title': 'Latihan Pernapasan',
+    'description': 'Kulit bayi dilindungi lapisan putih (vernix). Paru-paru mulai berkembang.',
+    'emoji': '🥭',
+  },
+  20: {
+    'size': '16.5 cm, Pisang',
+    'title': 'Setengah Jalan!',
+    'description': 'Kehamilan sudah setengah jalan. Bayi mulai punya pola tidur-bangun.',
+    'emoji': '🍌',
+  },
     21: {
-      'size': '18.0 cm, Carrot',
-      'title': 'Taste buds forming',
-      'description':
-          'The baby\'s taste buds are developing, and they can taste the different flavors in your amniotic fluid.',
-      'emoji': '🥕',
-    },
-    22: {
-      'size': '19.0 cm, Papaya',
-      'title': 'Developing eyes',
-      'description':
-          'The baby\'s eyes are formed but still developing. The irises don\'t have color yet.',
-      'emoji': '🍈',
-    },
-    23: {
-      'size': '20.0 cm, Grapefruit',
-      'title': 'Gaining weight',
-      'description':
-          'The baby is putting on weight rapidly now. The lungs are continuing to develop.',
-      'emoji': '🍊',
-    },
-    24: {
-      'size': '21.0 cm, Ear of corn',
-      'title': 'Viability milestone',
-      'description':
-          'The baby has reached viability, meaning they might be able to survive outside the womb with intensive care.',
-      'emoji': '🌽',
-    },
-    25: {
-      'size': '22.0 cm, Cauliflower',
-      'title': 'Responding to sound',
-      'description':
-          'The baby responds to your voice and other sounds by moving or increasing their heart rate.',
-      'emoji': '🥦',
-    },
-    26: {
-      'size': '23.0 cm, Lettuce',
-      'title': 'Opening eyes',
-      'description':
-          'The baby\'s eyes are now open, and they can blink. Their eyelashes have formed.',
-      'emoji': '🥬',
-    },
-    27: {
-      'size': '24.0 cm, Rutabaga',
-      'title': 'Third trimester begins',
-      'description':
-          'The baby is starting the third trimester! They\'re sleeping and waking at regular intervals.',
-      'emoji': '🥔',
-    },
-    28: {
-      'size': '25.0 cm, Eggplant',
-      'title': 'Brain development',
-      'description':
-          'The baby\'s brain is very active now, and they can dream during REM sleep.',
-      'emoji': '🍆',
-    },
-    29: {
-      'size': '26.0 cm, Butternut squash',
-      'title': 'Preparing for birth',
-      'description':
-          'The baby is getting more cramped in the uterus. They\'re usually positioned with their head facing down.',
-      'emoji': '🥔',
-    },
-    30: {
-      'size': '27.0 cm, Cabbage',
-      'title': 'Rapid brain growth',
-      'description':
-          'The baby\'s brain is growing rapidly, and they\'re gaining more weight.',
-      'emoji': '🥬',
-    },
-    31: {
-      'size': '28.0 cm, Coconut',
-      'title': 'Developing immune system',
-      'description':
-          'The baby is receiving antibodies from you, which will help protect them after birth.',
-      'emoji': '🥥',
-    },
-    32: {
-      'size': '29.0 cm, Jicama',
-      'title': 'Practicing breathing',
-      'description':
-          'The baby is practicing breathing by inhaling and exhaling amniotic fluid.',
-      'emoji': '🥔',
-    },
-    33: {
-      'size': '30.0 cm, Pineapple',
-      'title': 'Stronger bones',
-      'description':
-          'The baby\'s bones are hardening, except for the skull bones, which remain soft for birth.',
-      'emoji': '🍍',
-    },
-    34: {
-      'size': '32.0 cm, Cantaloupe',
-      'title': 'Developing reflexes',
-      'description':
-          'The baby has strong reflexes and may respond to light, sound, and touch.',
-      'emoji': '🍈',
-    },
-    35: {
-      'size': '33.0 cm, Honeydew melon',
-      'title': 'Getting plump',
-      'description':
-          'The baby is gaining about an ounce a day and getting plumper.',
-      'emoji': '🍈',
-    },
-    36: {
-      'size': '34.0 cm, Romaine lettuce',
-      'title': 'Ready for birth',
-      'description':
-          'The baby is considered full-term at 37 weeks. Their lungs are ready for breathing air.',
-      'emoji': '🥬',
-    },
-    37: {
-      'size': '35.0 cm, Swiss chard',
-      'title': 'Almost there',
-      'description':
-          'The baby is considered early term. They\'re practicing important skills like sucking and breathing.',
-      'emoji': '🥬',
-    },
-    38: {
-      'size': '36.0 cm, Leek',
-      'title': 'Full term',
-      'description':
-          'The baby is now considered full term. They\'re ready to be born any day now!',
-      'emoji': '🥬',
-    },
-    39: {
-      'size': '37.0 cm, Watermelon',
-      'title': 'Final preparations',
-      'description':
-          'The baby is continuing to build fat layers. They\'re preparing for the transition to life outside the womb.',
-      'emoji': '🍉',
-    },
-    40: {
-      'size': '38.0 cm, Small pumpkin',
-      'title': 'Due date approaching',
-      'description':
-          'The baby is fully developed and ready to meet you! The average baby weighs about 7.5 pounds at birth.',
-      'emoji': '🎃',
-    },
-  };
+    'size': '18.0 cm, Wortel',
+    'title': 'Pengecap Terbentuk',
+    'description': 'Indra pengecap bayi mulai terbentuk dan bisa merasakan cairan ketuban.',
+    'emoji': '🥕',
+  },
+  22: {
+    'size': '19.0 cm, Jeruk Bali',
+    'title': 'Perkembangan Mata',
+    'description': 'Mata bayi sudah terbentuk meski iris belum memiliki warna.',
+    'emoji': '🍊',
+  },
+  23: {
+    'size': '20.0 cm, Buku',
+    'title': 'Bertambah Berat',
+    'description': 'Bayi mulai menambah berat badan dengan cepat. Paru-paru terus berkembang.',
+    'emoji': '📘',
+  },
+  24: {
+    'size': '21.0 cm, Jagung',
+    'title': 'Tahap Viabilitas',
+    'description': 'Bayi mulai dianggap dapat bertahan hidup di luar rahim dengan perawatan intensif.',
+    'emoji': '🌽',
+  },
+  25: {
+    'size': '22.0 cm, Kembang Kol',
+    'title': 'Merespon Suara',
+    'description': 'Bayi merespons suara ibu dan suara lainnya dengan gerakan atau peningkatan detak jantung.',
+    'emoji': '🥦',
+  },
+  26: {
+    'size': '23.0 cm, Selada',
+    'title': 'Membuka Mata',
+    'description': 'Mata bayi mulai terbuka dan bisa berkedip. Bulu mata sudah tumbuh.',
+    'emoji': '🥬',
+  },
+  27: {
+    'size': '24.0 cm, Pizza',
+    'title': 'Trimester Ketiga Dimulai',
+    'description': 'Trimester ketiga dimulai. Bayi mulai punya pola tidur-bangun yang rutin.',
+    'emoji': '🍕',
+  },
+  28: {
+    'size': '25.0 cm, Paha Ayam',
+    'title': 'Otak Aktif',
+    'description': 'Otak bayi sangat aktif dan bisa bermimpi selama tidur REM.',
+    'emoji': '🍗',
+  },
+  29: {
+    'size': '26.0 cm, Terong',
+    'title': 'Persiapan Lahir',
+    'description': 'Ruang gerak bayi mulai sempit. Umumnya kepala mulai menghadap ke bawah.',
+    'emoji': '🍆',
+  },
+  30: {
+    'size': '27.0 cm, Kubis',
+    'title': 'Pertumbuhan Otak',
+    'description': 'Otak bayi tumbuh dengan cepat dan berat badan semakin bertambah.',
+    'emoji': '🥬',
+  },
+  31: {
+    'size': '28.0 cm, Sepatu Boots',
+    'title': 'Sistem Imun Terbentuk',
+    'description': 'Bayi mulai menerima antibodi dari ibu untuk perlindungan setelah lahir.',
+    'emoji': '👢',
+  },
+  32: {
+    'size': '29.0 cm, Kelapa',
+    'title': 'Latihan Napas',
+    'description': 'Bayi melatih napas dengan menghirup dan menghembuskan cairan ketuban.',
+    'emoji': '🥥',
+  },
+  33: {
+    'size': '30.0 cm, Nanas',
+    'title': 'Tulang Semakin Kuat',
+    'description': 'Tulang bayi mengeras kecuali tulang tengkorak yang masih lunak untuk persalinan.',
+    'emoji': '🍍',
+  },
+  34: {
+    'size': '32.0 cm, Durian',
+    'title': 'Refleks Aktif',
+    'description': 'Refleks bayi sudah kuat dan ia mulai merespons cahaya, suara, dan sentuhan.',
+    'emoji': '🌰',
+  },
+  35: {
+    'size': '33.0 cm, Melon',
+    'title': 'Menjadi Gemuk',
+    'description': 'Bayi bertambah sekitar 30 gram per hari dan tubuhnya makin berisi.',
+    'emoji': '🍈',
+  },
+  36: {
+    'size': '34.0 cm, Pepaya',
+    'title': 'Siap Dilahirkan',
+    'description': 'Bayi dianggap cukup bulan pada minggu ke-37. Paru-paru siap bernapas.',
+    'emoji': '🍈',
+  },
+  37: {
+    'size': '35.0 cm, Ukulele',
+    'title': 'Hampir Sampai',
+    'description': 'Bayi berada pada tahap “early term” dan berlatih menghisap serta bernapas.',
+    'emoji': '🎸',
+  },
+  38: {
+    'size': '36.0 cm, Buah Nangka',
+    'title': 'Cukup Bulan',
+    'description': 'Bayi dianggap cukup bulan dan siap lahir kapan saja.',
+    'emoji': '🥭',
+  },
+  39: {
+    'size': '37.0 cm, Labu',
+    'title': 'Persiapan Akhir',
+    'description': 'Lemak terus bertambah. Bayi siap menghadapi dunia luar.',
+    'emoji': '🎃',
+  },
+  40: {
+    'size': '38.0 cm, Semangka',
+    'title': 'Hari Perkiraan Lahir',
+    'description': 'Bayi sudah berkembang sempurna dan siap bertemu denganmu!',
+    'emoji': '🍉',
+  },
+};
 
   @override
   void initState() {
@@ -407,10 +369,11 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
   @override
   void dispose() {
     _imageExistsCache.clear();
+    _searchController.dispose();
     super.dispose();
   }
 
-  Widget _buildColoredStatItem({
+Widget _buildColoredStatItem({
     required String title,
     required String value,
     required String unit,
@@ -436,7 +399,7 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10), // Slightly reduced padding
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -449,27 +412,28 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
                   color: color.withOpacity(0.3),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, size: 18, color: color),
+                child: Icon(icon, size: 16, color: color), // Slightly smaller icon
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6), // Reduced spacing
               Expanded(
                 child: Text(
                   title,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 12, // Reduced font size
                     fontWeight: FontWeight.w500,
                     color: color,
                   ),
                   overflow: TextOverflow.ellipsis,
-                  maxLines: 2, // Allow 2 lines for longer titles
+                  maxLines: 2,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Flexible(
+          const SizedBox(height: 6), // Reduced spacing
+          Expanded( // Changed from Flexible to Expanded
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 FittedBox(
                   fit: BoxFit.scaleDown,
@@ -477,7 +441,7 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
                   child: Text(
                     value,
                     style: const TextStyle(
-                      fontSize: 24,
+                      fontSize: 20, // Slightly reduced font size
                       fontWeight: FontWeight.bold,
                       color: Colors.black87,
                     ),
@@ -486,7 +450,7 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
                 Text(
                   unit,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 11, // Slightly reduced font size
                     color: Colors.grey[700],
                   ),
                 ),
@@ -498,118 +462,130 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
+@override
+Widget build(BuildContext context) {
+  return DefaultTabController(
+    length: 2,
+    child: Scaffold(
+      backgroundColor: Color(0xFFF2F4F7),
+      extendBody: true,
+      appBar: AppBar(
+        toolbarHeight: 0,
+        elevation: 0,
         backgroundColor: Color(0xFFF2F4F7),
-        extendBody: true,
-        body: Column(
+      ),
+      body: Container(
+        color: Color(0xFFF2F4F7),
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: MediaQuery.of(context).padding.top + 1),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: AnimatedSwitcher(
-                duration: Duration(milliseconds: 250),
-                transitionBuilder: (child, animation) {
-                  return FadeTransition(
-                    opacity: animation,
-                    child: child,
-                  );
-                },
-                child: isSearching
-                    ? Row(
-                        key: ValueKey('search'),
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              decoration: InputDecoration(
-                                hintText: 'Cari Tips n Trik...',
-                                prefixIcon: Icon(Icons.search),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                contentPadding: EdgeInsets.symmetric(
-                                    vertical: 0, horizontal: 12),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 12),
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                isSearching = false; // Only close search
-                              });
-                            },
-                            child: Icon(Icons.close,
-                                size: 28, color: Colors.black54),
-                          ),
-                        ],
-                      )
-                    : Row(
-                        key: ValueKey('normal'),
+            // Header section dengan padding yang lebih kecil
+            Builder(
+              builder: (context) {
+                final currentTab = DefaultTabController.of(context)?.index ?? 0;
+                return Container(
+                  color: Color(0xFFF2F4F7),
+                  padding: EdgeInsets.only(
+                    top: MediaQuery.of(context).padding.top + 8, // Dikurangi dari 16
+                    left: 20,
+                    right: 20,
+                    bottom: 8, // Dikurangi dari 16
+                  ),
+                  child: Column(
+                    children: [
+                      // Title dan Search Row
+                      Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            "Kesehatan",
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black87,
-                            ),
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 300),
+                            child: _isSearching
+                                ? SizedBox(
+                                    key: ValueKey('search-field'),
+                                    width: MediaQuery.of(context).size.width - 100,
+                                    child: TextField(
+                                      controller: _searchController,
+                                      autofocus: true,
+                                      decoration: InputDecoration(
+                                        hintText: 'Cari Tips n Trik...',
+                                        border: InputBorder.none,
+                                        hintStyle: TextStyle(color: Colors.grey),
+                                        filled: true,
+                                        fillColor: Color(0xFFF2F4F7),
+                                      ),
+                                      style: TextStyle(color: Colors.black87),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _searchQuery = value;
+                                        });
+                                      },
+                                    ),
+                                  )
+                                : Text(
+                                    "Kesehatan",
+                                    key: ValueKey('title'),
+                                    style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
                           ),
-                          Row(
-                            children: [
-                              GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    isSearching = true;
-                                  });
-                                },
-                                child: Icon(Icons.search,
-                                    size: 28, color: Colors.black54),
+                          if (currentTab == 1)
+                            IconButton(
+                              icon: AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 300),
+                                child: _isSearching
+                                    ? Icon(Icons.close, key: ValueKey('close-icon'))
+                                    : Icon(Icons.search, key: ValueKey('search-icon')),
                               ),
-                              
-                            ],
-                          ),
+                              onPressed: () {
+                                setState(() {
+                                  _isSearching = !_isSearching;
+                                  if (!_isSearching) {
+                                    _searchController.clear();
+                                    _searchQuery = '';
+                                  }
+                                });
+                              },
+                            ),
                         ],
                       ),
-              ),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(color: Colors.grey.shade300, width: 1),
-                ),
-              ),
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: TabBar(
-                      indicatorWeight: 4,
-                      indicatorSize: TabBarIndicatorSize.label,
-                      indicatorColor: Color(0xFF10B2CF),
-                      labelColor: Color(0xFF10B2CF),
-                      unselectedLabelColor: Colors.grey,
-                      labelStyle: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
+                      SizedBox(height: 12), // Dikurangi dari 16
+                      // TabBar dengan ukuran yang lebih kompak
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Color(0xFFF2F4F7),
+                          border: Border(
+                            bottom: BorderSide(color: Colors.grey.shade300, width: 1),
+                          ),
+                        ),
+                        child: TabBar(
+                          indicatorWeight: 3, // Dikurangi dari 4
+                          indicatorSize: TabBarIndicatorSize.label,
+                          indicatorColor: Color(0xFF10B2CF),
+                          labelColor: Color(0xFF10B2CF),
+                          unselectedLabelColor: Colors.grey,
+                          labelStyle: TextStyle(
+                            fontSize: 16, // Dikurangi dari 18
+                            fontWeight: FontWeight.w600,
+                          ),
+                          unselectedLabelStyle: TextStyle(
+                            fontSize: 16, // Dikurangi dari 18
+                            fontWeight: FontWeight.w400,
+                          ),
+                          // Mengurangi padding di TabBar
+                          labelPadding: EdgeInsets.symmetric(vertical: 8), // Tambahkan ini
+                          tabs: [
+                            Tab(text: "Minggu Si-Bayi"),
+                            Tab(text: "Tips & Trik"),
+                          ],
+                        ),
                       ),
-                      unselectedLabelStyle: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w400,
-                      ),
-                      tabs: [
-                        Tab(text: "Minggu Si-Bayi"),
-                        Tab(text: "Tips & Trik"),
-                      ],
-                    ),
+                    ],
                   ),
-                ],
-              ),
+                );
+              },
             ),
             Expanded(
               child: TabBarView(
@@ -782,8 +758,8 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
                                                 crossAxisCount: crossAxisCount,
                                                 childAspectRatio:
                                                     childAspectRatio,
-                                                mainAxisSpacing: 12,
-                                                crossAxisSpacing: 12,
+                                                mainAxisSpacing: 8, // Reduced spacing
+                                                crossAxisSpacing: 8, // Reduced spacing
                                                 children: [
                                                   _buildColoredStatItem(
                                                     title: "Tekanan Darah",
@@ -876,15 +852,20 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
                     ),
                   ),
                   // Second Tab - Tips & Trik
-                  TipsTrikTab(scrollController: widget.scrollController),
-                ],
-              ),
+                 TipsTrikTab(
+                  scrollController: widget.scrollController,
+                  searchQuery: _searchQuery,
+                  isSearching: _isSearching,
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+    ),
+  );
+}
 
   int _getCrossAxisCount(double screenWidth) {
     if (screenWidth > 1200) {
@@ -907,7 +888,7 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
     } else if (screenWidth > 600) {
       return 1.4; // Medium screens
     } else {
-      return 1.3; // Small screens
+      return 1.2; // Increased ratio for mobile to prevent cutting off
     }
   }
 
@@ -917,12 +898,12 @@ class _PregnancyTrackerScreenState extends State<PregnancyTrackerScreen> {
     int rows = (4 / crossAxisCount).ceil();
 
     // Base item height calculation
-    double itemWidth = (screenWidth - 32 - (crossAxisCount - 1) * 12) /
-        crossAxisCount; // Screen width minus margins and spacing
+    double itemWidth = (screenWidth - 32 - (crossAxisCount - 1) * 8) /
+        crossAxisCount; // Adjusted for reduced spacing (8 instead of 16)
     double childAspectRatio = _getChildAspectRatio(screenWidth);
     double itemHeight = itemWidth / childAspectRatio;
 
     // Total height = (rows * item height) + ((rows - 1) * main axis spacing)
-    return (rows * itemHeight) + ((rows - 1) * 12);
+    return (rows * itemHeight) + ((rows - 1) * 8); // Adjusted for reduced spacing
   }
-}
+}  

@@ -5,12 +5,17 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
-
 class TipsTrikTab extends StatefulWidget {
   final ScrollController scrollController;
+  final String searchQuery;
+  final bool isSearching;
 
-  const TipsTrikTab({Key? key, required this.scrollController})
-      : super(key: key);
+  const TipsTrikTab({
+    Key? key,
+    required this.scrollController,
+    this.searchQuery = '',
+    this.isSearching = false,
+  }) : super(key: key);
 
   @override
   _TipsTrikTabState createState() => _TipsTrikTabState();
@@ -20,8 +25,6 @@ class _TipsTrikTabState extends State<TipsTrikTab>
     with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
-
-  // Tambahkan variable untuk menyimpan kategori yang dipilih
   String? selectedCategory = null;
 
   @override
@@ -32,31 +35,42 @@ class _TipsTrikTabState extends State<TipsTrikTab>
       if (provider.oneContents.isEmpty && !provider.isLoading) {
         provider.fetchOneContent();
       }
-        provider.fetchAllContent();
+      provider.fetchAllContent();
     });
   }
 
-  // Method untuk mengubah kategori dan fetch data
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  List<Content> _filterContent(List<Content> contents) {
+    if (widget.searchQuery.isEmpty) return contents;
+    return contents.where((content) =>
+        content.title.toLowerCase().contains(widget.searchQuery.toLowerCase()) ||
+        (content.description?.toLowerCase().contains(widget.searchQuery.toLowerCase()) ?? false)
+    ).toList();
+  }
+
   void _selectCategory(String? category) {
     setState(() {
       selectedCategory = category;
     });
-    
+
     final provider = Provider.of<ContentProvider>(context, listen: false);
     if (category == null) {
-      // Jika tidak ada kategori dipilih, ambil semua data
       provider.fetchAllContent();
     } else {
-      // Jika ada kategori dipilih, ambil data berdasarkan kategori
       provider.fetchContentByCategory(category);
     }
   }
 
   Widget _buildCategoryButton(String title, String? category) {
     bool isSelected = selectedCategory == category;
-    
+
     return Container(
       height: 32,
+      margin: EdgeInsets.only(right: 8),
       child: OutlinedButton(
         onPressed: () => _selectCategory(category),
         child: Text(
@@ -68,7 +82,7 @@ class _TipsTrikTabState extends State<TipsTrikTab>
           ),
         ),
         style: OutlinedButton.styleFrom(
-          backgroundColor: isSelected ? Color(0xFF11B3CF) : Colors.transparent,
+          backgroundColor: isSelected ? Color(0xFF11B3CF) : Color(0xFFF2F4F7),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -76,63 +90,67 @@ class _TipsTrikTabState extends State<TipsTrikTab>
           side: BorderSide(
             color: isSelected ? Color(0xFF11B3CF) : Colors.grey.shade300,
           ),
+          padding: EdgeInsets.symmetric(horizontal: 12),
         ),
       ),
     );
   }
 
-Widget _buildFeaturedVideoItem(ContentProvider provider) {
-  if (provider.isLoading && provider.oneContents.isEmpty) {
-    return const Center(child: CircularProgressIndicator());
-  }
+  Widget _buildFeaturedVideoItem(ContentProvider provider) {
+    if (provider.isLoading && provider.oneContents.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-  if (provider.error.isNotEmpty) {
-    return Text(
-      'Gagal memuat video: ${provider.error}',
-      style: const TextStyle(color: Colors.red),
-    );
-  }
+    if (provider.error.isNotEmpty) {
+      return Text(
+        'Gagal memuat video: ${provider.error}',
+        style: const TextStyle(color: Colors.red),
+      );
+    }
 
-  if (provider.oneContents.isEmpty) {
-    return const SizedBox.shrink();
-  }
+    if (provider.oneContents.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
-  final content = provider.oneContents.first;
+    final content = provider.oneContents.first;
 
-  return GestureDetector(
-    onTap: () => _openArticleDetail(context, content),
-    child: Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Thumbnail dengan play icon
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(12),
-                ),
-                child: content.thumbnail != null && content.thumbnail!.isNotEmpty
-                    ? Image.network(
-                        content.thumbnail!,
-                        height: 180,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
+    return GestureDetector(
+      onTap: () => _openArticleDetail(context, content),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: Color(0xFFF2F4F7),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(12),
+                  ),
+                  child: content.thumbnail != null && content.thumbnail!.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: content.thumbnail!,
+                          height: 180,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
                             height: 180,
-                            width: double.infinity,
+                            color: Color(0xFFF2F4F7),
+                            child: Center(child: CircularProgressIndicator()),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            height: 180,
                             color: const Color(0xFF11B3CF),
                             child: const Center(
                               child: Icon(
@@ -141,87 +159,73 @@ Widget _buildFeaturedVideoItem(ContentProvider provider) {
                                 size: 36,
                               ),
                             ),
-                          );
-                        },
-                      )
-                    : Container(
-                        height: 180,
-                        width: double.infinity,
-                        color: const Color(0xFF11B3CF),
-                        child: const Center(
-                          child: Icon(
-                            Icons.play_arrow,
-                            color: Colors.white,
-                            size: 36,
+                          ),
+                        )
+                      : Container(
+                          height: 180,
+                          color: const Color(0xFF11B3CF),
+                          child: const Center(
+                            child: Icon(
+                              Icons.play_arrow,
+                              color: Colors.white,
+                              size: 36,
+                            ),
                           ),
                         ),
-                      ),
-              ),
-              Positioned.fill(
-                child: Center(
-                  child: Icon(
-                    Icons.play_circle_fill,
-                    color: Colors.black.withOpacity(0.6),
-                    size: 48,
+                ),
+                Positioned.fill(
+                  child: Center(
+                    child: Icon(
+                      Icons.play_circle_fill,
+                      color: Colors.black.withOpacity(0.6),
+                      size: 48,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-
-          // Bagian bawah putih berisi judul dan url
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(
-                bottom: Radius.circular(12),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Judul
-                Text(
-                  content.title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: Colors.black,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 6),
-                // URL
-                if (content.url != null && content.url!.isNotEmpty)
-                  Row(
-                    children: [
-                      const Icon(Icons.link, size: 14, color: Colors.grey),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          Uri.parse(content.url!).host,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
               ],
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    content.title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: Colors.black,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  if (content.url != null && content.url!.isNotEmpty)
+                    Row(
+                      children: [
+                        const Icon(Icons.link, size: 14, color: Colors.grey),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            Uri.parse(content.url!).host,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
-  // Article-related methods
   Future<void> _openArticleDetail(BuildContext context, Content content) async {
     if (content.url != null && content.url!.isNotEmpty) {
       try {
@@ -248,8 +252,10 @@ Widget _buildFeaturedVideoItem(ContentProvider provider) {
   }
 
   Widget _buildArticlesSection(
-      BuildContext context, ContentProvider contentProvider) {
-    
+    BuildContext context, 
+    ContentProvider contentProvider,
+    List<Content> filteredContents,
+  ) {
     if (contentProvider.isLoading && contentProvider.allContents.isEmpty) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 16.0),
@@ -259,7 +265,7 @@ Widget _buildFeaturedVideoItem(ContentProvider provider) {
 
     if (contentProvider.error.isNotEmpty) {
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
+        padding: const EdgeInsets.symmetric(vertical: 16.0),
         child: Column(
           children: [
             Text(
@@ -282,12 +288,14 @@ Widget _buildFeaturedVideoItem(ContentProvider provider) {
       );
     }
 
-    if (contentProvider.allContents.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 32.0),
+    if (filteredContents.isEmpty) {
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: 16.0),
         child: Center(
           child: Text(
-            'Tidak ada konten tersedia',
+            widget.searchQuery.isEmpty 
+                ? 'Tidak ada konten tersedia' 
+                : 'Tidak ditemukan hasil untuk "${widget.searchQuery}"',
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey,
@@ -300,9 +308,9 @@ Widget _buildFeaturedVideoItem(ContentProvider provider) {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: contentProvider.allContents.length,
+      itemCount: filteredContents.length,
       itemBuilder: (context, index) {
-        final content = contentProvider.allContents[index];
+        final content = filteredContents[index];
         return _buildArticleCard(
           title: content.title,
           thumbnail: content.thumbnail,
@@ -323,20 +331,19 @@ Widget _buildFeaturedVideoItem(ContentProvider provider) {
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: const EdgeInsets.only(bottom: 8),
         child: Card(
-          color: Colors.white,
+          color: Color(0xFFF2F4F7),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          elevation: 2,
+          elevation: 1,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Thumbnail image - left side (video-like)
               Container(
-                height: 100,
-                width: 120,
+                height: 90,
+                width: 100,
                 decoration: BoxDecoration(
                   borderRadius:
                       const BorderRadius.horizontal(left: Radius.circular(12)),
@@ -344,83 +351,52 @@ Widget _buildFeaturedVideoItem(ContentProvider provider) {
                 ),
                 child: Stack(
                   children: [
-                    // Background image or placeholder
                     ClipRRect(
                       borderRadius: const BorderRadius.horizontal(
                           left: Radius.circular(12)),
                       child: thumbnail != null
-                          ? Image.network(
-                              thumbnail,
+                          ? CachedNetworkImage(
+                              imageUrl: thumbnail,
                               width: double.infinity,
                               height: double.infinity,
                               fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  width: double.infinity,
-                                  height: double.infinity,
-                                  color: const Color(0xFF11B3CF),
-                                  child: const Center(),
-                                );
-                              },
+                              placeholder: (context, url) => Container(
+                                color: Color(0xFFF2F4F7),
+                                child: Center(child: CircularProgressIndicator()),
+                              ),
+                              errorWidget: (context, url, error) => Container(
+                                color: const Color(0xFF11B3CF),
+                                child: const Center(
+                                ),
+                              ),
                             )
                           : Container(
-                              width: double.infinity,
-                              height: double.infinity,
                               color: const Color(0xFF11B3CF),
                               child: const Center(
-                                child: Icon(
-                                  Icons.article,
-                                  color: Colors.white,
-                                  size: 30,
-                                ),
+                                
                               ),
                             ),
                     ),
-                    // Play button overlay (video-like appearance)
                     Center(
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.black.withOpacity(0.6),
                           shape: BoxShape.circle,
                         ),
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(6),
                         child: const Icon(
                           Icons.play_arrow,
                           color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                    // Duration badge (video-like feature)
-                    Positioned(
-                      bottom: 4,
-                      right: 4,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 4,
-                          vertical: 1,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.8),
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                        child: const Text(
-                          "Tonton",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 8,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          size: 18,
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-              // Article content - right side
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(12.0),
+                  padding: const EdgeInsets.all(10.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.start,
@@ -428,7 +404,7 @@ Widget _buildFeaturedVideoItem(ContentProvider provider) {
                       Text(
                         title,
                         style: const TextStyle(
-                          fontSize: 14,
+                          fontSize: 13,
                           fontWeight: FontWeight.w500,
                           color: Colors.black,
                         ),
@@ -437,17 +413,17 @@ Widget _buildFeaturedVideoItem(ContentProvider provider) {
                       ),
                       if (url != null)
                         Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
+                          padding: const EdgeInsets.only(top: 6.0),
                           child: Row(
                             children: [
                               const Icon(Icons.link,
-                                  size: 14, color: Colors.grey),
+                                  size: 12, color: Colors.grey),
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
                                   Uri.parse(url).host,
                                   style: const TextStyle(
-                                    fontSize: 12,
+                                    fontSize: 11,
                                     color: Colors.grey,
                                   ),
                                   overflow: TextOverflow.ellipsis,
@@ -469,88 +445,86 @@ Widget _buildFeaturedVideoItem(ContentProvider provider) {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      controller: widget.scrollController,
-      physics: BouncingScrollPhysics(),
-      padding: EdgeInsets.only(bottom: 100),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Category buttons - Updated dengan parameter kategori
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  _buildCategoryButton("Semua", null), // Tombol untuk semua kategori
-                  SizedBox(width: 8),
-                  _buildCategoryButton("Olahraga", "exercise"),
-                  SizedBox(width: 8),
-                  _buildCategoryButton("Nutrisi", "nutrition"),
-                  SizedBox(width: 8),
-                  _buildCategoryButton("Kesehatan", "health_tips"),
-                ],
+    super.build(context);
+    return Container(
+      color: Color(0xFFF2F4F7), 
+      child: SingleChildScrollView(
+        controller: widget.scrollController,
+        physics: BouncingScrollPhysics(),
+        padding: EdgeInsets.only(bottom: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Category buttons
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildCategoryButton("Semua", null),
+                    _buildCategoryButton("Olahraga", "exercise"),
+                    _buildCategoryButton("Nutrisi", "nutrition"),
+                    _buildCategoryButton("Kesehatan", "health_tips"),
+                  ],
+                ),
               ),
             ),
-          ),
 
-          // Video Terbaru section - hanya tampil jika tidak ada kategori dipilih
-          if (selectedCategory == null)
+            // Video Terbaru section - hanya tampil jika tidak ada kategori dipilih
+            if (selectedCategory == null)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Rekomendasi Video",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Consumer<ContentProvider>(
+                      builder: (context, provider, child) {
+                        return _buildFeaturedVideoItem(provider);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Rekomendasi Video",
+                    selectedCategory == null 
+                        ? "Semua Video" 
+                        : "Video ${_getCategoryTitle(selectedCategory!)}",
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: 12),
+                  SizedBox(height: 8),
                   Consumer<ContentProvider>(
-                    builder: (context, provider, child) {
-                      return _buildFeaturedVideoItem(provider);
+                    builder: (context, contentProvider, child) {
+                      final filteredContents = _filterContent(contentProvider.allContents);
+                      return _buildArticlesSection(context, contentProvider, filteredContents);
                     },
                   ),
                 ],
               ),
             ),
-
-          // Articles section
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  selectedCategory == null 
-                      ? "Semua Video" 
-                      : "Video ${_getCategoryTitle(selectedCategory!)}",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 12),
-                Consumer<ContentProvider>(
-                  builder: (context, contentProvider, child) {
-                    return _buildArticlesSection(context, contentProvider);
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  // Helper method untuk mendapatkan judul kategori
   String _getCategoryTitle(String category) {
     switch (category) {
       case 'exercise':

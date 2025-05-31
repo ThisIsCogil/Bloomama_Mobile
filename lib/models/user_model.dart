@@ -8,6 +8,7 @@ class User {
   final String? phoneNumber;
   final String? address;
   final String? profilePicture;
+  final String? profilePictureUrl;
   final String? token;
 
   User({
@@ -18,23 +19,27 @@ class User {
     this.phoneNumber,
     this.address,
     this.profilePicture,
+    this.profilePictureUrl,
     this.token,
   });
 
-  // For API responses
+  // PERBAIKAN: fromJson untuk API responses dan SharedPreferences
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      userId: json['user_id'] is int ? json['user_id'] : int.tryParse(json['user_id'].toString()),
+      userId: json['user_id'] is int 
+          ? json['user_id'] 
+          : int.tryParse(json['user_id'].toString()),
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       phoneNumber: json['phone_number'],
       address: json['address'],
       profilePicture: json['profile_picture'],
+      profilePictureUrl: json['profile_picture_url'], // PENTING: pastikan ini ada
       token: json['token'],
     );
   }
 
-  // For API requests
+  // PERBAIKAN: toJson untuk API requests dan SharedPreferences
   Map<String, dynamic> toJson() {
     return {
       if (userId != null) 'user_id': userId,
@@ -44,35 +49,9 @@ class User {
       if (phoneNumber != null) 'phone_number': phoneNumber,
       if (address != null) 'address': address,
       if (profilePicture != null) 'profile_picture': profilePicture,
+      if (profilePictureUrl != null) 'profile_picture_url': profilePictureUrl, // PENTING
       if (token != null) 'token': token,
     };
-  }
-
-  // For SharedPreferences storage
-  String toJsonString() {
-    return json.encode({
-      'user_id': userId,
-      'name': name,
-      'email': email,
-      'phone_number': phoneNumber,
-      'address': address,
-      'profile_picture': profilePicture,
-      // Never store password or token in SharedPreferences
-    });
-  }
-
-  // For SharedPreferences retrieval
-  factory User.fromJsonString(String jsonString) {
-    final data = json.decode(jsonString);
-    return User(
-      userId: data['user_id'] is int ? data['user_id'] : int.tryParse(data['user_id'].toString()),
-      name: data['name'] ?? '',
-      email: data['email'] ?? '',
-      phoneNumber: data['phone_number'],
-      address: data['address'],
-      profilePicture: data['profile_picture'],
-      // Don't retrieve password or token from SharedPreferences
-    );
   }
 
   // Copy with method for immutability
@@ -84,6 +63,7 @@ class User {
     String? phoneNumber,
     String? address,
     String? profilePicture,
+    String? profilePictureUrl,
     String? token,
   }) {
     return User(
@@ -94,7 +74,43 @@ class User {
       phoneNumber: phoneNumber ?? this.phoneNumber,
       address: address ?? this.address,
       profilePicture: profilePicture ?? this.profilePicture,
+      profilePictureUrl: profilePictureUrl ?? this.profilePictureUrl,
       token: token ?? this.token,
     );
+  }
+
+  // PERBAIKAN: Method untuk mendapatkan URL gambar profil
+  String? getProfileImageUrl() {
+    // Debug print untuk troubleshooting
+    print('Getting profile image URL...');
+    print('profilePictureUrl: $profilePictureUrl');
+    print('profilePicture: $profilePicture');
+    
+    // Prioritas 1: Gunakan profile_picture_url jika ada (sudah full URL)
+    if (profilePictureUrl != null && profilePictureUrl!.isNotEmpty) {
+      print('Using profilePictureUrl: $profilePictureUrl');
+      return profilePictureUrl;
+    } 
+    
+    // Prioritas 2: Konstruksi URL dari profile_picture path
+    if (profilePicture != null && profilePicture!.isNotEmpty) {
+      const String baseUrl = 'http://192.168.1.14:8000'; // Sesuaikan dengan base URL Anda
+      final String constructedUrl = '$baseUrl/storage/$profilePicture';
+      print('Constructed URL: $constructedUrl');
+      return constructedUrl;
+    }
+    
+    print('No profile image available');
+    return null;
+  }
+
+  // Method untuk cek apakah user memiliki foto profil
+  bool hasProfileImage() {
+    return getProfileImageUrl() != null;
+  }
+
+  @override
+  String toString() {
+    return 'User(userId: $userId, name: $name, email: $email, profilePictureUrl: $profilePictureUrl)';
   }
 }

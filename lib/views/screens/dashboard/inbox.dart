@@ -188,7 +188,7 @@ class _InboxViewState extends State<InboxView> {
                       ),
                       if (appointment.status != null) ...[
                         const SizedBox(height: 12),
-                        _buildStatusChip(appointment.status!),
+                        _buildStatusChip(appointment.status!, appointment),
                       ],
                     ],
                   ),
@@ -214,9 +214,11 @@ class _InboxViewState extends State<InboxView> {
     );
   }
 
-  Widget _buildStatusChip(String status) {
-    final statusColors = _getStatusColors(status);
-    return Container(
+Widget _buildStatusChip(String status, Appointment appointment) {
+  final statusColors = _getStatusColors(status);
+  return GestureDetector(
+    onTap: () => _showStatusChangeDialog(appointment),
+    child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: statusColors['background'],
@@ -235,8 +237,217 @@ class _InboxViewState extends State<InboxView> {
           letterSpacing: 0.5,
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
+// FIXED: Use direct controller reference instead of Provider.of
+void _showStatusChangeDialog(Appointment appointment) {
+  showDialog(
+    context: context,
+    barrierDismissible: true,
+    builder: (context) => Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          shape: BoxShape.rectangle,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 10.0,
+              offset: Offset(0.0, 10.0),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.edit_calendar,
+                    color: Colors.blue[600],
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Ubah Status',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Pilih status baru untuk appointment',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 24),
+            
+            // Status Options
+            if (appointment.status?.toLowerCase() == 'pending') ...[
+              _buildStatusOption(
+                context: context,
+                icon: Icons.check_circle_outline,
+                iconColor: Colors.green,
+                title: 'Konfirmasi',
+                subtitle: 'Setujui appointment ini',
+                onTap: () {
+                  Navigator.pop(context);
+                  _appointmentController.updateAppointmentStatus(appointment.id, 'confirmed');
+                },
+              ),
+              const SizedBox(height: 12),
+              _buildStatusOption(
+                context: context,
+                icon: Icons.cancel_outlined,
+                iconColor: Colors.red,
+                title: 'Batalkan',
+                subtitle: 'Tolak appointment ini',
+                onTap: () {
+                  Navigator.pop(context);
+                  _appointmentController.updateAppointmentStatus(appointment.id, 'canceled');
+                },
+              ),
+            ],
+            
+            if (appointment.status?.toLowerCase() == 'confirmed') ...[
+              _buildStatusOption(
+                context: context,
+                icon: Icons.task_alt,
+                iconColor: Colors.blue,
+                title: 'Tandai Selesai',
+                subtitle: 'Appointment telah selesai',
+                onTap: () {
+                  Navigator.pop(context);
+                  _appointmentController.updateAppointmentStatus(appointment.id, 'completed');
+                },
+              ),
+            ],
+            
+            const SizedBox(height: 24),
+            
+            // Cancel Button
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                onPressed: () => Navigator.pop(context),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  'Batal',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _buildStatusOption({
+  required BuildContext context,
+  required IconData icon,
+  required Color iconColor,
+  required String title,
+  required String subtitle,
+  required VoidCallback onTap,
+}) {
+  return Material(
+    color: Colors.transparent,
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: Colors.grey.withOpacity(0.2),
+            width: 1,
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: iconColor,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Colors.grey[400],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
 
   Widget _buildErrorWidget(String error) {
     return Center(
@@ -353,109 +564,124 @@ class _InboxViewState extends State<InboxView> {
   }
 
   void _showAppointmentDetail(Appointment appointment) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
+  showDialog(
+    context: context,
+    builder: (context) => Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      insetPadding: const EdgeInsets.all(20),
+      child: Container(
+        width: double.infinity,
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width - 40,
+          maxHeight: MediaQuery.of(context).size.height * 0.8,
+        ),
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
           borderRadius: BorderRadius.circular(20),
         ),
-        insetPadding: const EdgeInsets.all(20),
-        child: Container(
-          width: double.infinity,
-          constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width - 40,
-            maxHeight: MediaQuery.of(context).size.height * 0.8,
-          ),
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: lightCyan,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.event_note_rounded,
-                        color: primaryCyan,
-                        size: 20,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header with icon and title
+              Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: lightCyan,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.event_note_rounded,
+                      color: primaryCyan,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Detail Janji Temu',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[800],
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Text(
-                        'Detail Pertemuan',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                _buildDetailItem('Catatan', appointment.notes),
-                const SizedBox(height: 16),
-                _buildDetailItem('Waktu', _formatDateTime(appointment.dateTime)),
-                if (appointment.status != null) ...[
-                  const SizedBox(height: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Status',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey[700],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      _buildStatusChip(appointment.status!),
-                    ],
                   ),
                 ],
-                const SizedBox(height: 32),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryCyan,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+              ),
+              const SizedBox(height: 24),
+              
+              // Appointment details
+              _buildDetailItem('Catatan', appointment.notes),
+              const SizedBox(height: 16),
+              
+              // Conditionally show midwife name
+              if (appointment.midwifeName != null && appointment.midwifeName!.isNotEmpty) ...[
+                _buildDetailItem('Bidan', appointment.midwifeName!),
+                const SizedBox(height: 16),
+              ],
+              
+              _buildDetailItem('Waktu', _formatDateTime(appointment.dateTime)),
+              
+              // Conditionally show status
+              if (appointment.status != null) ...[
+                const SizedBox(height: 16),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Status',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[700],
                       ),
                     ),
-                    child: const Text(
-                      'Tutup',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                      ),
+                    const SizedBox(height: 8),
+                    _buildStatusChip(appointment.status!, appointment),
+                  ],
+                ),
+              ],
+              
+              const SizedBox(height: 32),
+              
+              // Close button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryCyan,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Tutup',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildDetailItem(String label, String value) {
     return Column(

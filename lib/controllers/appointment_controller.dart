@@ -10,10 +10,12 @@ class AppointmentController extends ChangeNotifier {
   List<Appointment> _appointments = [];
   bool _isLoading = false;
   String _errorMessage = '';
+  bool _isUpdatingStatus = false;
 
   List<Appointment> get appointments => _appointments;
   bool get isLoading => _isLoading;
   String get errorMessage => _errorMessage;
+  bool get isUpdatingStatus => _isUpdatingStatus;
 
   Future<void> fetchAppointments() async {
     try {
@@ -45,5 +47,27 @@ class AppointmentController extends ChangeNotifier {
 
   Future<void> refreshAppointments() async {
     await fetchAppointments();
+  }
+
+  Future<void> updateAppointmentStatus(int appointmentId, String newStatus) async {
+    try {
+      _isUpdatingStatus = true;
+      notifyListeners();
+
+      await ApiService.updateAppointmentStatus(appointmentId, newStatus);
+      
+      // Update the local appointment list
+      final index = _appointments.indexWhere((a) => a.id == appointmentId);
+      if (index != -1) {
+        _appointments[index] = _appointments[index].copyWith(status: newStatus);
+      }
+      
+      _errorMessage = '';
+    } catch (e) {
+      _errorMessage = e.toString();
+    } finally {
+      _isUpdatingStatus = false;
+      notifyListeners();
+    }
   }
 }
