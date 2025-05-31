@@ -758,8 +758,8 @@ Widget build(BuildContext context) {
                                                 crossAxisCount: crossAxisCount,
                                                 childAspectRatio:
                                                     childAspectRatio,
-                                                mainAxisSpacing: 12,
-                                                crossAxisSpacing: 12,
+                                                mainAxisSpacing: 8, // Reduced spacing
+                                                crossAxisSpacing: 8, // Reduced spacing
                                                 children: [
                                                   _buildColoredStatItem(
                                                     title: "Tekanan Darah",
@@ -888,7 +888,7 @@ Widget build(BuildContext context) {
     } else if (screenWidth > 600) {
       return 1.4; // Medium screens
     } else {
-      return 1.3; // Small screens
+      return 1.2; // Increased ratio for mobile to prevent cutting off
     }
   }
 
@@ -898,12 +898,12 @@ Widget build(BuildContext context) {
     int rows = (4 / crossAxisCount).ceil();
 
     // Base item height calculation
-    double itemWidth = (screenWidth - 32 - (crossAxisCount - 1) * 12) /
-        crossAxisCount; // Screen width minus margins and spacing
+    double itemWidth = (screenWidth - 32 - (crossAxisCount - 1) * 8) /
+        crossAxisCount; // Adjusted for reduced spacing (8 instead of 16)
     double childAspectRatio = _getChildAspectRatio(screenWidth);
     double itemHeight = itemWidth / childAspectRatio;
 
     // Total height = (rows * item height) + ((rows - 1) * main axis spacing)
-    return (rows * itemHeight) + ((rows - 1) * 12);
+    return (rows * itemHeight) + ((rows - 1) * 8); // Adjusted for reduced spacing
   }
-}
+}  

@@ -4,8 +4,6 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 import '../controllers/auth_controller.dart';
-import '../controllers/pregnancy_controller.dart';
-import '../models/health_model.dart';
 import '../models/user_pregnancy.dart';
 import '../models/content_model.dart';
 import '../models/event_model.dart';
@@ -13,7 +11,7 @@ import '../models/appointment.dart';
 import 'package:flutter/foundation.dart'; // Add this import
 
 class ApiService {
-  static const String baseUrl = 'http://127.0.0.1:8000/api';
+  static const String baseUrl = 'http://192.168.1.14:8000/api';
 
   /// Save auth token
   static Future<void> saveToken(String token) async {
@@ -154,7 +152,7 @@ static Future<Map<String, dynamic>> updateProfile({
   }) async {
     final token = await AuthController().getToken();
     if (token == null) {
-      throw 'Token tidak ditemukan. Silakan login kembani.';
+      throw 'Token tidak ditemukan. Silakan login kembali.';
     }
 
     try {
@@ -163,21 +161,17 @@ static Future<Map<String, dynamic>> updateProfile({
         Uri.parse('$baseUrl/update-profile'),
       );
 
-      // Add headers
       request.headers.addAll({
         'Authorization': 'Bearer $token',
         'Accept': 'application/json',
       });
 
-      // Add text fields
       if (name != null) request.fields['name'] = name;
       if (phoneNumber != null) request.fields['phone_number'] = phoneNumber;
       if (address != null) request.fields['address'] = address;
       
-      // Add method spoofing for PUT request
       request.fields['_method'] = 'PUT';
 
-      // Add profile image if provided
       if (profileImageFile != null) {
         var profilePicture = await http.MultipartFile.fromPath(
           'profile_picture',
@@ -186,15 +180,18 @@ static Future<Map<String, dynamic>> updateProfile({
         request.files.add(profilePicture);
       }
 
-      // Send request
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
       
       final data = jsonDecode(response.body);
+      print('Update profile response: $data'); // Debug
 
       if (response.statusCode == 200) {
         final updatedUser = User.fromJson(data['data']['user']);
+        
+        // PENTING: Simpan user yang sudah diupdate
         await AuthController().saveUser(updatedUser);
+        
         return {
           'status': true,
           'message': data['message'] ?? 'Profil berhasil diperbarui',
@@ -204,6 +201,7 @@ static Future<Map<String, dynamic>> updateProfile({
         throw data['message'] ?? 'Gagal memperbarui profil';
       }
     } catch (e) {
+      print('Error updating profile: $e'); // Debug
       throw 'Error: $e';
     }
   }

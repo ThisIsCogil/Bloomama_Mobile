@@ -1,6 +1,5 @@
   import 'dart:io';
-
-import 'package:flutter/material.dart';
+  import 'package:flutter/material.dart';
   import 'package:lottie/lottie.dart';
   import 'package:animated_snack_bar/animated_snack_bar.dart';
   import 'package:awesome_dialog/awesome_dialog.dart';
@@ -10,47 +9,106 @@ import 'package:flutter/material.dart';
   import '../views/navbar.dart';
   import '../views/auth_screen.dart';
   import 'dart:convert';
+  import 'package:http/http.dart' as http;
 
   class AuthController {
-    static const String baseUrl = 'http://127.0.0.1:8000';
-    static const String _userKey = 'user_data';
-    static const String _tokenKey = 'auth_token';
+  static const String baseUrl = 'http://192.168.1.14:8000';
+  static const String _userKey = 'user_data';
+  static const String _tokenKey = 'auth_token';
 
-    Future<void> saveUser(User user) async {
+  // PERBAIKAN: Simpan user dengan menyertakan profile_picture_url
+  Future<void> saveUser(User user) async {
+    try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_userKey, json.encode(user.toJson()));
+      final userMap = user.toJson();
+      await prefs.setString(_userKey, json.encode(userMap));
+      
+      // Debug print untuk memastikan data tersimpan
+      print('User saved to SharedPreferences: ${json.encode(userMap)}');
+    } catch (e) {
+      print('Error saving user: $e');
     }
+  }
 
-    Future<User?> getUser() async {
-      final prefs = await SharedPreferences.getInstance();
-      final userJsonString = prefs.getString(_userKey);
-      if (userJsonString != null) {
-        try {
-          final userJson = json.decode(userJsonString) as Map<String, dynamic>;
-          return User.fromJson(userJson);
-        } catch (e) {
-          print('Error parsing user data: $e');
-          return null;
+  // PERBAIKAN: Method untuk get user yang lebih robust
+  Future<User?> getUser() async {
+    try {
+      final token = await getToken();
+      if (token == null) return null;
+
+      // Coba ambil data terbaru dari server terlebih dahulu
+      try {
+        final response = await http.get(
+          Uri.parse('$baseUrl/api/user-profile'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Accept': 'application/json',
+          },
+        ).timeout(const Duration(seconds: 10));
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          print('Server response: $data'); // Debug
+          
+          if (data['status'] == true) {
+            final user = User.fromJson(data['data']['user']);
+            
+            // Simpan data terbaru ke local storage
+            await saveUser(user);
+            return user;
+          }
         }
+      } catch (e) {
+        print('Error fetching from server: $e');
+        // Lanjut ke fallback local data
       }
+
+      // Fallback: ambil dari local storage
+      return await getUserFromLocal();
+      
+    } catch (e) {
+      print('Error in getUser: $e');
       return null;
     }
+  }
 
-    Future<void> clearUser() async {
+  // Method untuk ambil user dari local storage saja
+  Future<User?> getUserFromLocal() async {
+    try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_userKey);
-      await prefs.remove(_tokenKey);
+      final userJsonString = prefs.getString(_userKey);
+      
+      if (userJsonString != null) {
+        final userJson = json.decode(userJsonString) as Map<String, dynamic>;
+        final user = User.fromJson(userJson);
+        
+        // Debug print
+        print('User loaded from local: ${json.encode(userJson)}');
+        print('Profile picture URL: ${user.getProfileImageUrl()}');
+        
+        return user;
+      }
+    } catch (e) {
+      print('Error parsing user data: $e');
     }
+    return null;
+  }
 
-    Future<void> saveToken(String token) async {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_tokenKey, token);
-    }
+  Future<void> clearUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_userKey);
+    await prefs.remove(_tokenKey);
+  }
 
-    Future<String?> getToken() async {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(_tokenKey);
-    }
+  Future<void> saveToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_tokenKey, token);
+  }
+
+  Future<String?> getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_tokenKey);
+  }
 
     Future<void> login(
         String email, String password, BuildContext context) async {
@@ -164,7 +222,6 @@ import 'package:flutter/material.dart';
     VoidCallback? onSuccess,
   }) async {
     try {
-      // Cek token terlebih dahulu
       final token = await getToken();
       if (token == null) {
         throw 'Anda harus login terlebih dahulu';
@@ -174,46 +231,87 @@ import 'package:flutter/material.dart';
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => Center(
-          child: Lottie.asset(
-            'assets/lottie/loading.json',
-            width: 150,
-            height: 150,
-            fit: BoxFit.fill,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFF11B3CF),
           ),
         ),
       );
 
-      // Call API to update profile
-      final response = await ApiService.updateProfile(
-        name: name,
-        phoneNumber: phoneNumber,
-        address: address,
-        profileImageFile: profileImageFile,
+      // Prepare multipart request
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/api/update-profile'),
       );
 
+      request.headers.addAll({
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      });
+
+      // Add fields
+      if (name != null) request.fields['name'] = name;
+      if (phoneNumber != null) request.fields['phone_number'] = phoneNumber;
+      if (address != null) request.fields['address'] = address;
+      request.fields['_method'] = 'PUT';
+
+      // Add profile image if provided
+      if (profileImageFile != null) {
+        var profilePicture = await http.MultipartFile.fromPath(
+          'profile_picture',
+          profileImageFile.path,
+        );
+        request.files.add(profilePicture);
+      }
+
+      // Send request
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+      
       // Close loading dialog
       Navigator.pop(context);
 
-      if (response['status'] == true) {
-        // Update local user data
-        final updatedUser = response['user'] as User;
-        await saveUser(updatedUser);
+      final data = jsonDecode(response.body);
+      print('Update profile response: $data'); // Debug
 
-        _showSuccessSnackBar(context, 'Profil berhasil diperbarui');
+      if (response.statusCode == 200 && data['status'] == true) {
+        // Create updated user object
+        final updatedUser = User.fromJson(data['data']['user']);
+        
+        // Save updated user
+        await saveUser(updatedUser);
+        
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profil berhasil diperbarui'),
+            backgroundColor: Color(0xFF11B3CF),
+          ),
+        );
 
         // Call success callback if provided
         if (onSuccess != null) {
           onSuccess();
         }
       } else {
-        throw response['message'] ?? 'Gagal memperbarui profil';
+        throw data['message'] ?? 'Gagal memperbarui profil';
       }
     } catch (e) {
-      Navigator.pop(context); // Close loading dialog in case of error
-      _showErrorSnackBar(context, e.toString());
+      // Close loading dialog if still open
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+      
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
+
 
     Future<void> changePassword({
       required BuildContext context,
