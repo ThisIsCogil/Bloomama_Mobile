@@ -11,7 +11,7 @@ import '../models/appointment.dart';
 import 'package:flutter/foundation.dart'; // Add this import
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.1.14:8000/api';
+  static const String baseUrl = 'http://192.168.91.233:8000/api';
 
   /// Save auth token
   static Future<void> saveToken(String token) async {
