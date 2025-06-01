@@ -1,318 +1,663 @@
 import 'package:flutter/material.dart';
+import 'package:ably_flutter/ably_flutter.dart' as ably;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:async';
+import 'package:flutter/foundation.dart'; // Untuk kIsWeb
+import 'package:login/controllers/auth_controller.dart';
 
 class MentorScreen extends StatefulWidget {
   final ScrollController scrollController;
-  
   const MentorScreen({Key? key, required this.scrollController}) : super(key: key);
-  
+
   @override
   _MentorScreenState createState() => _MentorScreenState();
 }
 
 class _MentorScreenState extends State<MentorScreen> {
-  final List<Mentor> mentors = [
-    Mentor(name: "Dr. Rahmat Hariadi", location: "RS Jember Klinik", rating: 4, image: "assets/mentor1.jpg"),
-    Mentor(name: "Dr. Retno Astuti", location: "RS Lavalette", rating: 5, image: "assets/mentor2.jpg"),
-    Mentor(name: "Dr. Budi", location: "Klinik Suherman", rating: 5, image: "assets/mentor3.jpg"),
-  ];
+  String? ablyApiKey = 'ooLakg.FjeVTg:aQwgKFtS-8JKmogyEl3Hj1iq5jU0An4aMidPJ5_-i0w';
+  
+  // Berbeda untuk Web dan Mobile
+  String? get backendBaseUrl {
+    if (kIsWeb) {
+      return 'http://127.0.0.1:8000';
+    } else {
+      
+      return 'http://192.168.91.233:8000'; 
+    }
+  }
+  
+  String? authToken;
+  int? userId;
+  bool isLoading = true;
 
-  final List<String> locations = ["Semua", "Rs. Jember", "Rs. Kaliwates", "RS CitraHusada", "Klinik Soebandi"];
-  String selectedLocation = "Semua";
+  @override
+  void initState() {
+    super.initState();
+    loadUserData();
+  }
+
+  Future<void> loadUserData() async {
+    try {
+      final authController = AuthController();
+      final token = await authController.getToken();
+      final user = await authController.getUser();
+
+      setState(() {
+        authToken = token;
+        userId = user?.userId;
+        isLoading = false;
+      });
+    } catch (e) {
+      print('❌ Error loading user data: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    List<Mentor> filteredMentors = selectedLocation == "Semua"
-        ? mentors
-        : mentors.where((mentor) => mentor.location.toLowerCase() == selectedLocation.toLowerCase()).toList();
-        
-    return Scaffold(
-      backgroundColor: Color(0xFFF2F4F7),
-      appBar: AppBar(
-        title: Text("Mentor", style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        foregroundColor: Colors.black,
+    if (isLoading) return const Center(child: CircularProgressIndicator());
+    if (authToken == null || userId == null) return const Center(child: Text('User belum login'));
+
+    return MaterialApp(
+      title: 'Flutter Ably Chat',
+      home: ChatPage(
+        ablyApiKey: ablyApiKey!,
+        backendBaseUrl: backendBaseUrl!,
+        authToken: authToken!,
+        userId: userId!,
+        testMode: true, // SELALU TRUE untuk test mode
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
+    );
+  }
+}
+
+class ChatPage extends StatefulWidget {
+  final String ablyApiKey;
+  final String backendBaseUrl;
+  final String authToken;
+  final int userId;
+  final bool testMode;
+
+  ChatPage({
+    required this.ablyApiKey,
+    required this.backendBaseUrl,
+    required this.authToken,
+    required this.userId,
+    this.testMode = false,
+  });
+
+  @override
+  State<ChatPage> createState() => _ChatPageState();
+}
+
+class _ChatPageState extends State<ChatPage> {
+  late ably.Realtime realtime;
+  late ably.RealtimeChannel channel;
+  final TextEditingController _controller = TextEditingController();
+  List<Map<String, dynamic>> messages = [];
+
+  int chatPartnerId = 1;
+  bool isConnected = false;
+  String connectionStatus = 'Menghubungkan...';
+  Timer? connectionTimeout;
+  bool isInitializing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    print('🌐 Running on: ${kIsWeb ? "Web Browser" : "Mobile Device"}');
+    print('🔗 Backend URL: ${widget.backendBaseUrl}');
+    initializeAbly();
+  }
+
+  Future<void> initializeAbly() async {
+    if (isInitializing) {
+      print('⚠️ Already initializing, skipping...');
+      return;
+    }
+
+    setState(() {
+      isInitializing = true;
+      connectionStatus = 'Menginisialisasi...';
+      isConnected = false;
+    });
+
+    try {
+      print('🔄 Initializing Ably for ${kIsWeb ? "Web" : "Mobile"}...');
+      print('🔑 Using API Key: ${widget.ablyApiKey.substring(0, 10)}...');
+
+      // Cancel any existing timeout
+      connectionTimeout?.cancel();
+      
+      // Set timeout
+      connectionTimeout = Timer(Duration(seconds: 30), () {
+        if (!isConnected) {
+          setState(() {
+            connectionStatus = 'Timeout - Cek koneksi internet';
+            isConnected = false;
+            isInitializing = false;
+          });
+          print('❌ Connection timeout after 30 seconds');
+        }
+      });
+
+      // Create Ably client dengan options yang sesuai untuk web
+      final clientOptions = ably.ClientOptions.fromKey(widget.ablyApiKey);
+      
+      // Khusus untuk web browser
+      if (kIsWeb) {
+        print('🌐 Configuring for web browser...');
+        // Tambahkan konfigurasi untuk web jika diperlukan
+        clientOptions.logLevel = ably.LogLevel.verbose; // Untuk debugging
+      }
+
+      print('🔧 Creating Ably Realtime client...');
+      realtime = ably.Realtime(options: clientOptions);
+      
+      // Listen to all connection state changes
+      realtime.connection.on().listen((ably.ConnectionStateChange stateChange) {
+        print('🔄 Connection state changed: ${stateChange.previous} -> ${stateChange.current}');
+        
+        if (mounted) {
+          setState(() {
+            switch (stateChange.current) {
+              case ably.ConnectionState.connecting:
+                connectionStatus = 'Menghubungkan ke Ably...';
+                break;
+              case ably.ConnectionState.connected:
+                connectionStatus = 'Terhubung';
+                isConnected = true;
+                isInitializing = false;
+                connectionTimeout?.cancel();
+                _setupChannel();
+                break;
+              case ably.ConnectionState.disconnected:
+                connectionStatus = 'Terputus';
+                isConnected = false;
+                isInitializing = false;
+                break;
+              case ably.ConnectionState.suspended:
+                connectionStatus = 'Koneksi tertunda';
+                isConnected = false;
+                break;
+              case ably.ConnectionState.failed:
+                connectionStatus = 'Gagal terhubung';
+                isConnected = false;
+                isInitializing = false;
+                break;
+              case ably.ConnectionState.closing:
+                connectionStatus = 'Menutup koneksi...';
+                isConnected = false;
+                break;
+              case ably.ConnectionState.closed:
+                connectionStatus = 'Koneksi ditutup';
+                isConnected = false;
+                isInitializing = false;
+                break;
+              default:
+                connectionStatus = 'Status: ${stateChange.current}';
+                break;
+            }
+          });
+        }
+
+        // Handle errors
+        if (stateChange.reason != null) {
+          print('❌ Connection error: ${stateChange.reason}');
+        }
+      });
+
+      print('✅ Ably client created, waiting for connection...');
+
+    } catch (e, stackTrace) {
+      print('❌ Ably initialization error: $e');
+      print('Stack trace: $stackTrace');
+      
+      if (mounted) {
+        setState(() {
+          connectionStatus = 'Error: ${e.toString()}';
+          isConnected = false;
+          isInitializing = false;
+        });
+      }
+      
+      connectionTimeout?.cancel();
+    }
+  }
+
+  void _setupChannel() async {
+    try {
+      final channelName = 'chat.${widget.userId}.$chatPartnerId';
+      print('📢 Setting up channel: $channelName');
+      
+      channel = realtime.channels.get(channelName);
+
+      // Subscribe to messages
+      channel.subscribe().listen((ably.Message message) {
+        print('📨 Received message: ${message.data}');
+        final data = message.data;
+        if (data is Map && mounted) {
+          setState(() {
+            messages.add({
+              'sender_id': data['sender_id'],
+              'message': data['message'],
+              'created_at': data['created_at'] ?? DateTime.now().toIso8601String(),
+            });
+          });
+        }
+      });
+
+      print('🎯 Channel subscribed successfully!');
+
+      // Load history jika bukan test mode (tapi untuk web biasanya skip)
+      if (!widget.testMode && !kIsWeb) {
+        await fetchChatHistory();
+      } else {
+        print('🧪 Skipping history fetch (Test mode or Web)');
+      }
+
+    } catch (e) {
+      print('❌ Setup channel error: $e');
+    }
+  }
+
+  Future<void> fetchChatHistory() async {
+    try {
+      print('📥 Fetching chat history...');
+      setState(() {
+        connectionStatus = 'Memuat riwayat...';
+      });
+
+      final url = Uri.parse('${widget.backendBaseUrl}/messages/$chatPartnerId');
+      print('🔗 History URL: $url');
+      
+      final response = await http.get(
+        url, 
+        headers: {
+          'Authorization': 'Bearer ${widget.authToken}',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(Duration(seconds: 10));
+
+      print('📥 History response: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body);
+        if (mounted) {
+          setState(() {
+            messages = List<Map<String, dynamic>>.from(jsonData['messages']);
+          });
+        }
+        print('✅ Chat history loaded: ${messages.length} messages');
+      } else {
+        print('❌ Failed to fetch history: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      print('❌ Fetch history error: $e');
+      // Jangan ubah connection status jika sudah terhubung ke Ably
+    }
+  }
+
+  Future<void> sendMessage(String text) async {
+    if (!isConnected) {
+      print('❌ Cannot send message - not connected');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Tidak terhubung ke server'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final now = DateTime.now().toIso8601String();
+
+    final messageData = {
+      'sender_id': widget.userId,
+      'receiver_id': chatPartnerId,
+      'message': text,
+      'created_at': now,
+    };
+
+    try {
+      print('📤 Sending message: $text');
+      
+      // Selalu gunakan test mode untuk web
+      if (widget.testMode || kIsWeb) {
+        print('🧪 Sending via Ably directly...');
+        
+        // Publish ke Ably
+        await channel.publish(data: messageData);
+        print('✅ Message published to Ably');
+        
+        // Tambah ke local messages
+        if (mounted) {
+          setState(() {
+            messages.add(messageData);
+          });
+          _controller.clear();
+        }
+        
+        print('🎉 Message sent successfully!');
+        return;
+      }
+
+      // Mode normal (dengan backend) - jarang digunakan di web karena CORS
+      print('🌐 Sending via backend...');
+      final url = Uri.parse('${widget.backendBaseUrl}/messages/send');
+      final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Bearer ${widget.authToken}',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
+          'receiver_id': chatPartnerId,
+          'message': text,
+        }),
+      ).timeout(Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        await channel.publish(data: messageData);
+        if (mounted) {
+          setState(() {
+            messages.add(messageData);
+          });
+          _controller.clear();
+        }
+        print('✅ Message sent via backend');
+      } else {
+        throw Exception('Backend error: ${response.statusCode}');
+      }
+      
+    } catch (e) {
+      print('❌ Send message error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal mengirim: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void retryConnection() {
+    print('🔄 Retrying connection...');
+    
+    // Close existing connection
+    try {
+      realtime.close();
+    } catch (e) {
+      print('Warning: Error closing connection: $e');
+    }
+    
+    // Reset state
+    setState(() {
+      isConnected = false;
+      isInitializing = false;
+      connectionStatus = 'Mencoba lagi...';
+    });
+    
+    // Wait a bit then retry
+    Timer(Duration(seconds: 1), () {
+      initializeAbly();
+    });
+  }
+
+  @override
+  void dispose() {
+    print('🧹 Disposing chat page...');
+    connectionTimeout?.cancel();
+    try {
+      if (isConnected) {
+        channel.detach();
+      }
+      realtime.close();
+    } catch (e) {
+      print('❌ Dispose error: $e');
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Search Bar + Hamburger Icon
-            Row(
-              children: [
-                IconButton(
-                  icon: Icon(Icons.menu),
-                  onPressed: () {},
-                ),
-                Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: "Cari nama bidan",
-                      prefixIcon: Icon(Icons.search),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 10),
-
-            // Filter Lokasi
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: locations.map((location) {
-                  bool isSelected = location == selectedLocation;
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                    child: ChoiceChip(
-                      label: Text(location),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        setState(() {
-                          selectedLocation = location;
-                        });
-                      },
-                      backgroundColor: Colors.white,
-                      selectedColor: Colors.blue.shade100, // Warna biru saat dipilih
-                      labelStyle: TextStyle(color: isSelected ? Colors.blue : Colors.black),
-                      side: BorderSide(color: Colors.blue),
-                    ),
-                  );
-                }).toList(),
+            Text('Chat dengan Bidan'),
+            if (kIsWeb)
+              Text(
+                'Web Browser Mode',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
               ),
-            ),
-            SizedBox(height: 10),
-
-            // Rekomendasi Bidan
-            Text("Rekomendasi Bidan", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            SizedBox(height: 10),
-            Text("Konsultasi online dengan bidan kami", style: TextStyle(fontSize:14, fontWeight: FontWeight.normal),),
-            SizedBox(height: 10),
-
-            // List Mentor/Bidan - Using the passed ScrollController
-            Expanded(
-              child: ListView.builder(
-                controller: widget.scrollController, // Use the controller from MainScreen
-                itemCount: filteredMentors.length,
-                itemBuilder: (context, index) {
-                  return MentorCard(mentor: filteredMentors[index]);
-                },
-              ),
-            ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-// Model Mentor/Bidan
-class Mentor {
-  final String name;
-  final String location;
-  final int rating;
-  final String image;
-
-  Mentor({required this.name, required this.location, required this.rating, required this.image});
-}
-
-// Widget Card untuk Menampilkan Bidan
-class MentorCard extends StatelessWidget {
-  final Mentor mentor;
-
-  const MentorCard({Key? key, required this.mentor}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => MentorDetailScreen(mentor: mentor)),
-        );
-      },
-      child: Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: EdgeInsets.symmetric(vertical: 8),
-        child: Padding(
-          padding: EdgeInsets.all(12),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 30,
-                backgroundImage: AssetImage(mentor.image),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(mentor.name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    Text(mentor.location, style: TextStyle(color: Colors.grey)),
-                    Row(
-                      children: List.generate(5, (index) {
-                        return Icon(
-                          index < mentor.rating ? Icons.star : Icons.star_border,
-                          color: Colors.yellow,
-                          size: 16,
-                        );
-                      }),
-                    ),
-                  ],
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ChatScreen(mentor: mentor)),
-                  );
-                },
-                child: Text("Chat"),
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Halaman Detail Bidan
-class MentorDetailScreen extends StatelessWidget {
-  final Mentor mentor;
-
-  const MentorDetailScreen({Key? key, required this.mentor}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(mentor.name),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-      ),
-      body: Center(
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              CircleAvatar(
-                radius: 50,
-                backgroundImage: AssetImage(mentor.image),
-              ),
-              SizedBox(height: 20),
-              Text(
-                mentor.name,
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              Text(
-                mentor.location,
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 10),
-              Text(
-                "Rating: ${mentor.rating} ⭐",
-                style: TextStyle(fontSize: 16),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ChatScreen(mentor: mentor)),
-                  );
-                },
-                child: Text("Hubungi"),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Halaman Chat
-class ChatScreen extends StatelessWidget {
-  final Mentor mentor;
-
-  const ChatScreen({Key? key, required this.mentor}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(mentor.name),
+        backgroundColor: isConnected ? Colors.green : Colors.red,
         actions: [
-          IconButton(icon: Icon(Icons.call), onPressed: () {}),
-          IconButton(icon: Icon(Icons.video_call), onPressed: () {}),
+          Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    isConnected ? '🟢 Online' : '🔴 Offline',
+                    style: TextStyle(color: Colors.white, fontSize: 11),
+                  ),
+                  if (!isConnected)
+                    Text(
+                      connectionStatus,
+                      style: TextStyle(color: Colors.white70, fontSize: 9),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          if (!isConnected && !isInitializing)
+            IconButton(
+              icon: Icon(Icons.refresh),
+              onPressed: retryConnection,
+              tooltip: 'Coba lagi',
+            ),
         ],
       ),
       body: Column(
         children: [
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.all(16),
-              children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Container(
-                    padding: EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text("Halo, ada yang bisa saya bantu?"),
-                  ),
-                ),
-                SizedBox(height: 10),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Container(
-                    padding: EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.blue,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+          // Status Banner
+          if (!isConnected)
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(12),
+              color: Colors.red[100],
+              child: Row(
+                children: [
+                  if (isInitializing)
+                    SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  else
+                    Icon(Icons.error_outline, color: Colors.red),
+                  SizedBox(width: 8),
+                  Expanded(
                     child: Text(
-                      "Helo Dawg, Selamat Siang?",
-                      style: TextStyle(color: Colors.white),
+                      connectionStatus,
+                      style: TextStyle(color: Colors.red[800]),
                     ),
                   ),
+                  if (!isInitializing)
+                    TextButton(
+                      onPressed: retryConnection,
+                      child: Text('Coba Lagi'),
+                    ),
+                ],
+              ),
+            ),
+
+          // Test Mode Banner
+          if (widget.testMode)
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(8),
+              color: Colors.orange[100],
+              child: Text(
+                '🧪 TEST MODE - Direct to Ably ${kIsWeb ? "(Web)" : "(Mobile)"}',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.orange[800],
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+
+          // Chat Messages
+          Expanded(
+            child: Container(
+              margin: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: messages.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.chat_bubble_outline,
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            isConnected 
+                                ? 'Belum ada pesan\nMulai percakapan!' 
+                                : 'Menunggu koneksi...',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      reverse: true,
+                      itemCount: messages.length,
+                      padding: EdgeInsets.all(8),
+                      itemBuilder: (context, index) {
+                        final msg = messages[messages.length - 1 - index];
+                        final isMe = msg['sender_id'] == widget.userId;
+                        
+                        return Container(
+                          margin: EdgeInsets.symmetric(vertical: 4),
+                          child: Align(
+                            alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                            child: Container(
+                              constraints: BoxConstraints(
+                                maxWidth: MediaQuery.of(context).size.width * 0.7
+                              ),
+                              padding: EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: isMe ? Colors.blueAccent : Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black12,
+                                    blurRadius: 4,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    msg['message'],
+                                    style: TextStyle(
+                                      color: isMe ? Colors.white : Colors.black87,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    _formatTime(msg['created_at'] ?? ''),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: isMe ? Colors.white70 : Colors.black54,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ),
+
+          // Message Input
+          Container(
+            padding: EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 4,
+                  offset: Offset(0, -2),
                 ),
               ],
             ),
-          ),
-          Padding(
-            padding: EdgeInsets.all(8),
             child: Row(
               children: [
                 Expanded(
                   child: TextField(
+                    controller: _controller,
+                    enabled: isConnected,
                     decoration: InputDecoration(
-                      hintText: "Tulis pesan...",
+                      hintText: isConnected ? 'Ketik pesan...' : connectionStatus,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
+                        borderRadius: BorderRadius.circular(24),
                       ),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      fillColor: Colors.grey[50],
+                      filled: true,
                     ),
+                    onSubmitted: (text) {
+                      if (text.trim().isNotEmpty && isConnected) {
+                        sendMessage(text.trim());
+                      }
+                    },
                   ),
                 ),
-                IconButton(
-                  icon: Icon(Icons.send, color: Colors.blue),
-                  onPressed: () {},
+                SizedBox(width: 8),
+                FloatingActionButton(
+                  mini: true,
+                  backgroundColor: isConnected ? Colors.blueAccent : Colors.grey,
+                  onPressed: isConnected ? () {
+                    final text = _controller.text.trim();
+                    if (text.isNotEmpty) {
+                      sendMessage(text);
+                    }
+                  } : null,
+                  child: Icon(
+                    Icons.send,
+                    color: Colors.white,
+                  ),
                 ),
               ],
             ),
@@ -320,5 +665,22 @@ class ChatScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _formatTime(String isoString) {
+    try {
+      final date = DateTime.parse(isoString);
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final messageDate = DateTime(date.year, date.month, date.day);
+      
+      if (messageDate == today) {
+        return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+      } else {
+        return '${date.day}/${date.month} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+      }
+    } catch (e) {
+      return '';
+    }
   }
 }

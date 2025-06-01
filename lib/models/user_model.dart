@@ -94,7 +94,7 @@ class User {
     
     // Prioritas 2: Konstruksi URL dari profile_picture path
     if (profilePicture != null && profilePicture!.isNotEmpty) {
-      const String baseUrl = 'http://192.168.1.14:8000'; // Sesuaikan dengan base URL Anda
+      const String baseUrl = 'http://192.168.91.233:8000'; // Sesuaikan dengan base URL Anda
       final String constructedUrl = '$baseUrl/storage/$profilePicture';
       print('Constructed URL: $constructedUrl');
       return constructedUrl;

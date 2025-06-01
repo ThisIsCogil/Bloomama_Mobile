@@ -32,7 +32,6 @@ final Map<int, Map<String, dynamic>> _weekData = {
     'title': 'Awal Kehidupan',
     'description': 'Pembuahan baru saja terjadi! Sel telur yang telah dibuahi sedang membelah cepat menuju rahim.',
     'emoji': '🌱',
-    'notes': 'Semua normal, lanjutkan makan bergizi.',
   },
   2: {
     'size': '0.2 cm, Biji Wijen',

@@ -216,8 +216,10 @@ class _InboxViewState extends State<InboxView> {
 
 Widget _buildStatusChip(String status, Appointment appointment) {
   final statusColors = _getStatusColors(status);
+  final isClickable = status.toLowerCase() == 'pending';
+  
   return GestureDetector(
-    onTap: () => _showStatusChangeDialog(appointment),
+    onTap: isClickable ? () => _showStatusChangeDialog(appointment) : null,
     child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -228,20 +230,33 @@ Widget _buildStatusChip(String status, Appointment appointment) {
           width: 1,
         ),
       ),
-      child: Text(
-        status.toUpperCase(),
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: statusColors['text'],
-          letterSpacing: 0.5,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            status.toUpperCase(),
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: statusColors['text'],
+              letterSpacing: 0.5,
+            ),
+          ),
+          if (isClickable) ...[
+            const SizedBox(width: 4),
+            Icon(
+              Icons.edit,
+              size: 12,
+              color: statusColors['text'],
+            ),
+          ],
+        ],
       ),
     ),
   );
 }
 
-// FIXED: Use direct controller reference instead of Provider.of
+// Updated status change dialog with only 3 status options
 void _showStatusChangeDialog(Appointment appointment) {
   showDialog(
     context: context,
@@ -310,17 +325,17 @@ void _showStatusChangeDialog(Appointment appointment) {
             
             const SizedBox(height: 24),
             
-            // Status Options
+            // Status Options - Only pending status can be changed
             if (appointment.status?.toLowerCase() == 'pending') ...[
               _buildStatusOption(
                 context: context,
-                icon: Icons.check_circle_outline,
-                iconColor: Colors.green,
-                title: 'Konfirmasi',
-                subtitle: 'Setujui appointment ini',
+                icon: Icons.task_alt,
+                iconColor: primaryCyan,
+                title: 'Selesai',
+                subtitle: 'Tandai appointment sebagai selesai',
                 onTap: () {
                   Navigator.pop(context);
-                  _appointmentController.updateAppointmentStatus(appointment.id, 'confirmed');
+                  _appointmentController.updateAppointmentStatus(appointment.id, 'completed');
                 },
               ),
               const SizedBox(height: 12),
@@ -329,25 +344,44 @@ void _showStatusChangeDialog(Appointment appointment) {
                 icon: Icons.cancel_outlined,
                 iconColor: Colors.red,
                 title: 'Batalkan',
-                subtitle: 'Tolak appointment ini',
+                subtitle: 'Batalkan appointment ini',
                 onTap: () {
                   Navigator.pop(context);
                   _appointmentController.updateAppointmentStatus(appointment.id, 'canceled');
                 },
               ),
-            ],
-            
-            if (appointment.status?.toLowerCase() == 'confirmed') ...[
-              _buildStatusOption(
-                context: context,
-                icon: Icons.task_alt,
-                iconColor: Colors.blue,
-                title: 'Tandai Selesai',
-                subtitle: 'Appointment telah selesai',
-                onTap: () {
-                  Navigator.pop(context);
-                  _appointmentController.updateAppointmentStatus(appointment.id, 'completed');
-                },
+            ] else ...[
+              // Show message for completed/canceled appointments
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.grey[200]!,
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: Colors.grey[600],
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Status appointment ini sudah final dan tidak dapat diubah.',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
             
@@ -730,6 +764,7 @@ Widget _buildStatusOption({
     }
   }
 
+  // Updated status colors to only handle 3 statuses
   Map<String, Color> _getStatusColors(String status) {
     switch (status.toLowerCase()) {
       case 'pending':
@@ -738,23 +773,17 @@ Widget _buildStatusOption({
           'border': Colors.orange[400]!,
           'text': Colors.orange[700]!,
         };
-      case 'confirmed':
+      case 'completed':
         return {
           'background': Colors.green[50]!,
           'border': Colors.green[400]!,
           'text': Colors.green[700]!,
         };
-      case 'cancelled':
+      case 'canceled':
         return {
           'background': Colors.red[50]!,
           'border': Colors.red[400]!,
           'text': Colors.red[700]!,
-        };
-      case 'completed':
-        return {
-          'background': lightCyan,
-          'border': primaryCyan,
-          'text': primaryCyan,
         };
       default:
         return {

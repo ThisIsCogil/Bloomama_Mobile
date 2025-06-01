@@ -12,7 +12,7 @@
   import 'package:http/http.dart' as http;
 
   class AuthController {
-  static const String baseUrl = 'http://192.168.1.14:8000';
+  static const String baseUrl = 'http://192.168.91.233:8000';
   static const String _userKey = 'user_data';
   static const String _tokenKey = 'auth_token';
 
