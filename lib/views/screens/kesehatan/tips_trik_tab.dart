@@ -4,6 +4,7 @@ import 'package:login/models/content_model.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../../helpers/youtube_helper.dart';
 
 class TipsTrikTab extends StatefulWidget {
   final ScrollController scrollController;
@@ -96,135 +97,355 @@ class _TipsTrikTabState extends State<TipsTrikTab>
     );
   }
 
-  Widget _buildFeaturedVideoItem(ContentProvider provider) {
-    if (provider.isLoading && provider.oneContents.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
-    }
+Widget _buildFeaturedVideoItem(ContentProvider provider) {
+  if (provider.isLoading && provider.oneContents.isEmpty) {
+    return const Center(child: CircularProgressIndicator());
+  }
 
-    if (provider.error.isNotEmpty) {
-      return Text(
-        'Gagal memuat video: ${provider.error}',
-        style: const TextStyle(color: Colors.red),
-      );
-    }
+  if (provider.error.isNotEmpty) {
+    return Text(
+      'Gagal memuat video: ${provider.error}',
+      style: const TextStyle(color: Colors.red),
+    );
+  }
 
-    if (provider.oneContents.isEmpty) {
-      return const SizedBox.shrink();
-    }
+  if (provider.oneContents.isEmpty) {
+    return const SizedBox.shrink();
+  }
 
-    final content = provider.oneContents.first;
+  final content = provider.oneContents.first;
+  final thumbnailUrl = content.effectiveThumbnail; // This now prioritizes YouTube
 
-    return GestureDetector(
-      onTap: () => _openArticleDetail(context, content),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          color: Color(0xFFF2F4F7),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 6,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(12),
-                  ),
-                  child: content.thumbnail != null && content.thumbnail!.isNotEmpty
-                      ? CachedNetworkImage(
-                          imageUrl: content.thumbnail!,
-                          height: 180,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            height: 180,
-                            color: Color(0xFFF2F4F7),
-                            child: Center(child: CircularProgressIndicator()),
-                          ),
-                          errorWidget: (context, url, error) => Container(
-                            height: 180,
-                            color: const Color(0xFF11B3CF),
-                            child: const Center(
-                              child: Icon(
+  return GestureDetector(
+    onTap: () => _openArticleDetail(context, content),
+    child: Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
+                ),
+                child: thumbnailUrl.isNotEmpty
+                    ? _buildThumbnailImageLarge(thumbnailUrl, content.isYouTubeVideo, content.url)
+                    : Container(
+                        height: 180,
+                        color: const Color(0xFF11B3CF),
+                        child: const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
                                 Icons.play_arrow,
                                 color: Colors.white,
                                 size: 36,
                               ),
-                            ),
-                          ),
-                        )
-                      : Container(
-                          height: 180,
-                          color: const Color(0xFF11B3CF),
-                          child: const Center(
-                            child: Icon(
-                              Icons.play_arrow,
-                              color: Colors.white,
-                              size: 36,
-                            ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Video',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                ),
-                Positioned.fill(
-                  child: Center(
-                    child: Icon(
-                      Icons.play_circle_fill,
+                      ),
+              ),
+              // Play button overlay
+              Positioned.fill(
+                child: Center(
+                  child: Container(
+                    decoration: BoxDecoration(
                       color: Colors.black.withOpacity(0.6),
-                      size: 48,
+                      shape: BoxShape.circle,
                     ),
+                    padding: EdgeInsets.all(8),
+                    child: Icon(
+                      Icons.play_arrow,
+                      color: Colors.white,
+                      size: 32,
+                    ),
+                  ),
+                ),
+              ),
+              // YouTube badge
+              if (content.isYouTubeVideo)
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      'YouTube',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  content.title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: Colors.black,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 6),
+                if (content.url.isNotEmpty)
+                  Row(
+                    children: [
+                      Icon(
+                        content.isYouTubeVideo ? Icons.play_circle : Icons.link,
+                        size: 14, 
+                        color: content.isYouTubeVideo ? Colors.red : Colors.grey,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          Uri.parse(content.url).host,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: content.isYouTubeVideo ? Colors.red : Colors.grey,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+// Helper method for small thumbnail images with fallback
+Widget _buildThumbnailImage(String thumbnailUrl, bool isYouTube, String? videoUrl) {
+  return CachedNetworkImage(
+    imageUrl: thumbnailUrl,
+    width: double.infinity,
+    height: double.infinity,
+    fit: BoxFit.cover,
+    placeholder: (context, url) => Container(
+      color: Color(0xFFF2F4F7),
+      child: Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF11B3CF)),
+          strokeWidth: 2,
+        ),
+      ),
+    ),
+    errorWidget: (context, url, error) {
+      print('Error loading thumbnail: $error for URL: $url');
+      
+      // If it's YouTube and the current quality failed, try fallback
+      if (isYouTube && videoUrl != null) {
+        return _buildYouTubeFallbackImage(videoUrl);
+      }
+      
+      return Container(
+        color: const Color(0xFF11B3CF),
+        child: const Center(
+          child: Icon(
+            Icons.play_arrow,
+            color: Colors.white,
+            size: 24,
+          ),
+        ),
+      );
+    },
+  );
+}
+
+// Helper method for large thumbnail images with fallback
+Widget _buildThumbnailImageLarge(String thumbnailUrl, bool isYouTube, String videoUrl) {
+  return CachedNetworkImage(
+    imageUrl: thumbnailUrl,
+    height: 180,
+    width: double.infinity,
+    fit: BoxFit.cover,
+    placeholder: (context, url) => Container(
+      height: 180,
+      color: Color(0xFFF2F4F7),
+      child: Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF11B3CF)),
+        ),
+      ),
+    ),
+    errorWidget: (context, url, error) {
+      print('Error loading thumbnail: $error for URL: $url');
+      
+      // If it's YouTube and the current quality failed, try fallback
+      if (isYouTube && videoUrl.isNotEmpty) {
+        return _buildYouTubeFallbackImageLarge(videoUrl);
+      }
+      
+      return Container(
+        height: 180,
+        color: const Color(0xFF11B3CF),
+        child: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.play_arrow,
+                color: Colors.white,
+                size: 36,
+              ),
+              SizedBox(height: 4),
+              Text(
+                'Video',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+// Fallback widget for YouTube thumbnails (small)
+Widget _buildYouTubeFallbackImage(String videoUrl) {
+  final fallbackUrls = YouTubeHelper.getThumbnailUrlsWithMultipleFallbacks(videoUrl);
+  
+  if (fallbackUrls.length > 1) {
+    // Try the second fallback (mqdefault)
+    return CachedNetworkImage(
+      imageUrl: fallbackUrls[1],
+      width: double.infinity,
+      height: double.infinity,
+      fit: BoxFit.cover,
+      errorWidget: (context, url, error) {
+        return Container(
+          color: const Color(0xFF11B3CF),
+          child: const Center(
+            child: Icon(
+              Icons.play_arrow,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
+        );
+      },
+    );
+  }
+  
+  return Container(
+    color: const Color(0xFF11B3CF),
+    child: const Center(
+      child: Icon(
+        Icons.play_arrow,
+        color: Colors.white,
+        size: 24,
+      ),
+    ),
+  );
+}
+
+// Fallback widget for YouTube thumbnails (large)
+Widget _buildYouTubeFallbackImageLarge(String videoUrl) {
+  final fallbackUrls = YouTubeHelper.getThumbnailUrlsWithMultipleFallbacks(videoUrl);
+  
+  if (fallbackUrls.length > 1) {
+    // Try the second fallback (mqdefault)
+    return CachedNetworkImage(
+      imageUrl: fallbackUrls[1],
+      height: 180,
+      width: double.infinity,
+      fit: BoxFit.cover,
+      errorWidget: (context, url, error) {
+        return Container(
+          height: 180,
+          color: const Color(0xFF11B3CF),
+          child: const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.play_arrow,
+                  color: Colors.white,
+                  size: 36,
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Video',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
                   ),
                 ),
               ],
             ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    content.title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: Colors.black,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 6),
-                  if (content.url != null && content.url!.isNotEmpty)
-                    Row(
-                      children: [
-                        const Icon(Icons.link, size: 14, color: Colors.grey),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            Uri.parse(content.url!).host,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
+  
+  return Container(
+    height: 180,
+    color: const Color(0xFF11B3CF),
+    child: const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.play_arrow,
+            color: Colors.white,
+            size: 36,
+          ),
+          SizedBox(height: 4),
+          Text(
+            'Video',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 
   Future<void> _openArticleDetail(BuildContext context, Content content) async {
     if (content.url != null && content.url!.isNotEmpty) {
@@ -321,127 +542,159 @@ class _TipsTrikTabState extends State<TipsTrikTab>
     );
   }
 
-  Widget _buildArticleCard({
-    required String title,
-    String? thumbnail,
-    String? url,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        margin: const EdgeInsets.only(bottom: 8),
-        child: Card(
-          color: Color(0xFFF2F4F7),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 1,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                height: 90,
-                width: 100,
-                decoration: BoxDecoration(
-                  borderRadius:
-                      const BorderRadius.horizontal(left: Radius.circular(12)),
-                  color: const Color(0xFF11B3CF),
-                ),
-                child: Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: const BorderRadius.horizontal(
-                          left: Radius.circular(12)),
-                      child: thumbnail != null
-                          ? CachedNetworkImage(
-                              imageUrl: thumbnail,
-                              width: double.infinity,
-                              height: double.infinity,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => Container(
-                                color: Color(0xFFF2F4F7),
-                                child: Center(child: CircularProgressIndicator()),
-                              ),
-                              errorWidget: (context, url, error) => Container(
-                                color: const Color(0xFF11B3CF),
-                                child: const Center(
-                                ),
-                              ),
-                            )
-                          : Container(
-                              color: const Color(0xFF11B3CF),
-                              child: const Center(
-                                
+  // Updated _buildArticleCard method
+Widget _buildArticleCard({
+  required String title,
+  String? thumbnail,
+  String? url,
+  required VoidCallback onTap,
+}) {
+  // Always prioritize YouTube thumbnail if it's a YouTube URL
+  String effectiveThumbnail = '';
+  bool isYouTube = false;
+  
+  if (url != null && url.isNotEmpty) {
+    isYouTube = YouTubeHelper.isYouTubeUrl(url);
+    
+    // If it's YouTube, ALWAYS get thumbnail from YouTube
+    if (isYouTube) {
+      effectiveThumbnail = YouTubeHelper.getThumbnailUrlWithFallback(url);
+    } else if (thumbnail != null && thumbnail.isNotEmpty) {
+      // Only use database thumbnail for non-YouTube content
+      effectiveThumbnail = thumbnail;
+    }
+  }
+
+  return GestureDetector(
+    onTap: onTap,
+    child: Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Card(
+        color: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        elevation: 1,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 90,
+              width: 100,
+              decoration: BoxDecoration(
+                borderRadius:
+                    const BorderRadius.horizontal(left: Radius.circular(12)),
+                color: const Color(0xFF11B3CF),
+              ),
+              child: Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.horizontal(
+                        left: Radius.circular(12)),
+                    child: effectiveThumbnail.isNotEmpty
+                        ? _buildThumbnailImage(effectiveThumbnail, isYouTube, url)
+                        : Container(
+                            color: const Color(0xFF11B3CF),
+                            child: const Center(
+                              child: Icon(
+                                Icons.play_arrow,
+                                color: Colors.white,
+                                size: 24,
                               ),
                             ),
+                          ),
+                  ),
+                  // Play button overlay
+                  Center(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.6),
+                        shape: BoxShape.circle,
+                      ),
+                      padding: const EdgeInsets.all(6),
+                      child: const Icon(
+                        Icons.play_arrow,
+                        color: Colors.white,
+                        size: 18,
+                      ),
                     ),
-                    Center(
+                  ),
+                  // YouTube badge
+                  if (isYouTube)
+                    Positioned(
+                      top: 4,
+                      right: 4,
                       child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.6),
-                          shape: BoxShape.circle,
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(3),
                         ),
-                        padding: const EdgeInsets.all(6),
-                        child: const Icon(
-                          Icons.play_arrow,
-                          color: Colors.white,
-                          size: 18,
+                        child: Text(
+                          'YT',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black,
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (url != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6.0),
+                        child: Row(
+                          children: [
+                            Icon(
+                              isYouTube ? Icons.play_circle : Icons.link,
+                              size: 12, 
+                              color: isYouTube ? Colors.red : Colors.grey,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                Uri.parse(url).host,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: isYouTube ? Colors.red : Colors.grey,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black,
-                        ),
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (url != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 6.0),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.link,
-                                  size: 12, color: Colors.grey),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  Uri.parse(url).host,
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.grey,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {

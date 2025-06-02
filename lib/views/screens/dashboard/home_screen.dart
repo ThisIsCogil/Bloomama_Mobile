@@ -1628,8 +1628,13 @@ class _BabyModelViewerState extends State<BabyModelViewer>
                 final content = contentProvider.contents[index];
                 return _buildArticleCard(
                   title: content.title,
-                  thumbnail: content.thumbnail,
+                  // MODIFIED: Use effectiveThumbnail instead of thumbnail
+                  thumbnail: content.effectiveThumbnail,
+                  // ADDED: Pass YouTube thumbnail fallbacks for error handling
+                  youtubeFallbacks: content.youtubeThumbnailFallbacks,
                   url: content.url,
+                  // ADDED: Pass YouTube video flag
+                  isYouTubeVideo: content.isYouTubeVideo,
                   onTap: () => _openArticleDetail(context, content),
                 );
               },
@@ -1640,112 +1645,180 @@ class _BabyModelViewerState extends State<BabyModelViewer>
     );
   }
 
-    Widget _buildArticleCard({
-    required String title,
-    String? thumbnail,
-    String? url,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 230,
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        child: Card(
-          color: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 1,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Thumbnail image with play icon overlay
-              Container(
-                height: 140,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(12)),
-                  color: const Color(0xFF11B3CF),
-                ),
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: thumbnail != null
-                          ? ClipRRect(
-                              borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(12)),
-                              child: Image.network(
-                                thumbnail,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return const Center(
-                                    child: Icon(Icons.play_arrow,
-                                        color: Colors.white, size: 40),
-                                  );
-                                },
-                              ),
-                            )
-                          : const Center(
-                              child: Icon(Icons.play_arrow,
-                                  color: Colors.white, size: 40),
+Widget _buildArticleCard({
+  required String title,
+  String? thumbnail,
+  List<String>? youtubeFallbacks, // ADDED: YouTube fallback URLs
+  String? url,
+  bool isYouTubeVideo = false, // ADDED: YouTube video flag
+  required VoidCallback onTap,
+}) {
+  return GestureDetector(
+    onTap: onTap,
+    child: Container(
+      width: 230,
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      child: Card(
+        color: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        elevation: 1,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Thumbnail image with play icon overlay
+            Container(
+              height: 140,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(12)),
+                color: const Color(0xFF11B3CF),
+              ),
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: thumbnail != null && thumbnail.isNotEmpty
+                        ? ClipRRect(
+                            borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(12)),
+                            child: _buildImageWithFallback(
+                              thumbnail,
+                              youtubeFallbacks ?? [],
+                              isYouTubeVideo,
                             ),
-                    ),
-                    // Play icon overlay
+                          )
+                        : const Center(
+                            child: Icon(Icons.play_arrow,
+                                color: Colors.white, size: 40),
+                          ),
+                  ),
+                  // Play icon overlay - only show for YouTube videos
+                  if (isYouTubeVideo)
                     Center(
                       child: Icon(Icons.play_circle_fill,
                           color: Colors.black.withOpacity(0.6), size: 48),
                     ),
-                  ],
-                ),
+                ],
               ),
-              // Video content (title + optional url)
-              Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      softWrap: true,
-                      textAlign: TextAlign.start,
+            ),
+            // Video content (title + optional url)
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
                     ),
-                    if (url != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 6.0),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.link, size: 14, color: Colors.grey),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                Uri.parse(url).host,
-                                style: const TextStyle(
-                                  fontSize: 9,
-                                  color: Colors.grey,
-                                ),
-                                overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    softWrap: true,
+                    textAlign: TextAlign.start,
+                  ),
+                  if (url != null && url.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6.0),
+                      child: Row(
+                        children: [
+                          Icon(
+                            // MODIFIED: Use YouTube icon for YouTube videos
+                            isYouTubeVideo ? Icons.play_circle : Icons.link,
+                            size: 14,
+                            color: isYouTubeVideo ? Colors.red : Colors.grey,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              // MODIFIED: Show "YouTube" for YouTube videos
+                              isYouTubeVideo ? "YouTube" : Uri.parse(url).host,
+                              style: TextStyle(
+                                fontSize: 9,
+                                color: isYouTubeVideo ? Colors.red : Colors.grey,
                               ),
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                  ],
-                ),
+                    ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
+    ),
+  );
+}
+
+// ADDED: Helper method to handle image loading with fallbacks
+Widget _buildImageWithFallback(
+  String primaryUrl,
+  List<String> fallbackUrls,
+  bool isYouTubeVideo,
+) {
+  return Image.network(
+    primaryUrl,
+    fit: BoxFit.cover,
+    errorBuilder: (context, error, stackTrace) {
+      // If primary URL fails and we have fallbacks, try them
+      if (fallbackUrls.isNotEmpty) {
+        return _buildFallbackImage(fallbackUrls, 0);
+      }
+      
+      // If no fallbacks or not YouTube, show default icon
+      return Center(
+        child: Icon(
+          isYouTubeVideo ? Icons.play_arrow : Icons.image_not_supported,
+          color: Colors.white,
+          size: 40,
+        ),
+      );
+    },
+    loadingBuilder: (context, child, loadingProgress) {
+      if (loadingProgress == null) return child;
+      return const Center(
+        child: CircularProgressIndicator(
+          color: Colors.white,
+          strokeWidth: 2,
+        ),
+      );
+    },
+  );
+}
+
+// ADDED: Recursive fallback image loader for YouTube thumbnails
+Widget _buildFallbackImage(List<String> fallbackUrls, int index) {
+  if (index >= fallbackUrls.length) {
+    // All fallbacks failed, show default icon
+    return const Center(
+      child: Icon(Icons.play_arrow, color: Colors.white, size: 40),
     );
   }
+  
+  return Image.network(
+    fallbackUrls[index],
+    fit: BoxFit.cover,
+    errorBuilder: (context, error, stackTrace) {
+      // Try next fallback
+      return _buildFallbackImage(fallbackUrls, index + 1);
+    },
+    loadingBuilder: (context, child, loadingProgress) {
+      if (loadingProgress == null) return child;
+      return const Center(
+        child: CircularProgressIndicator(
+          color: Colors.white,
+          strokeWidth: 2,
+        ),
+      );
+    },
+  );
+}
 }

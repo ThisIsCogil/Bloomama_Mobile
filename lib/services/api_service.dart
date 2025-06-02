@@ -2,13 +2,14 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/midwife_model.dart';
 import '../models/user_model.dart';
 import '../controllers/auth_controller.dart';
 import '../models/user_pregnancy.dart';
 import '../models/content_model.dart';
 import '../models/event_model.dart';
 import '../models/appointment.dart';
-import 'package:flutter/foundation.dart'; // Add this import
+import 'package:flutter/foundation.dart';
 
 class ApiService {
   static const String baseUrl = 'http://192.168.91.233:8000/api';
@@ -544,4 +545,58 @@ static Future<Map<String, dynamic>> getHealthTrackingForChart(int userId) async 
     throw Exception('Network error: $e');
   }
 }
+
+static Future<List<MidwifeModel>> getAllMidwives() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/midwives'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        if (jsonData['success']) {
+          List<dynamic> midwifeList = jsonData['data'];
+          return midwifeList.map((json) => MidwifeModel.fromJson(json)).toList();
+        } else {
+          throw Exception('Failed to load midwives');
+        }
+      } else {
+        throw Exception('Failed to load midwives: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching midwives: $e');
+    }
+  }
+
+  // Mengambil data bidan berdasarkan ID
+  static Future<MidwifeModel> getMidwifeById(int id) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/midwives/$id'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        if (jsonData['success']) {
+          return MidwifeModel.fromJson(jsonData['data']);
+        } else {
+          throw Exception('Failed to load midwife');
+        }
+      } else if (response.statusCode == 404) {
+        throw Exception('Midwife not found');
+      } else {
+        throw Exception('Failed to load midwife: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching midwife: $e');
+    }
+  }
 }
